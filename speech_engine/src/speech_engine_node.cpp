@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <SpeechEngine/SpeechRequest.h>
+#include <speech_engine/speech_request.h>
 #include <stdio.h> // standard input / output functions
 #include <string.h> // string function definitions
 #include <unistd.h> // UNIX standard function definitions
@@ -18,7 +18,7 @@ public:
 	SpeechEngineCls();
 
 private:
-	void speechRequestCallback(const SpeechEngine::SpeechRequest::ConstPtr& speech_request);
+	void speechRequestCallback(const speech_engine::speech_request::ConstPtr& speech_request);
 
 	ros::NodeHandle nh_;
 
@@ -37,10 +37,10 @@ SpeechEngineCls::SpeechEngineCls()
 	//nh_.param("axis_angular", angular_, angular_);
 	//nh_.param("scale_angular", a_scale_, a_scale_);
 	//nh_.param("scale_linear", l_scale_, l_scale_);
-	speech_sub_ = nh_.subscribe < SpeechEngine::SpeechRequest> ("SpeechEngine/speech_request", 10, &SpeechEngineCls::speechRequestCallback, this);
+	speech_sub_ = nh_.subscribe < speech_engine::speech_request> ("speech_engine/speech_request", 10, &SpeechEngineCls::speechRequestCallback, this);
 }
 
-void SpeechEngineCls::speechRequestCallback(const SpeechEngine::SpeechRequest::ConstPtr& speech_request)
+void SpeechEngineCls::speechRequestCallback(const speech_engine::speech_request::ConstPtr& speech_request)
 {
 	unsigned int uid = 0;
 	espeak_Synth(speech_request->speech_request.c_str(), speech_request->speech_request.size(), 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
