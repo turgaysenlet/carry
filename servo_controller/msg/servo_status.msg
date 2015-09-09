@@ -1,0 +1,11 @@
+uint32 servo_no
+string name
+bool enabled
+uint32 mode
+uint32 target
+uint32 actual
+uint32 max
+uint32 min
+uint32 center
+uint32 velocity_limit
+uint32 acceleration_limit
