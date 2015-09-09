@@ -1,0 +1,6 @@
+#!/bin/bash
+cd ~/catkin_ws/src/carry
+clear;
+git add -A
+git commit -m "$*"
+git push
