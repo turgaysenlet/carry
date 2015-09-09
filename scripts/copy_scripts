@@ -1,0 +1,2 @@
+chmod +x ~/catkin_ws/src/carry/scripts/*
+sudo cp ~/catkin_ws/src/carry/scripts/* /usr/bin
