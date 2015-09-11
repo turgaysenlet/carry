@@ -159,7 +159,7 @@ void ServoControllerCls::InitializeServoProperties() {
 	servo_array_status.servo[5].enabled = true;
 }
 
-ServoControllerCls::servo_controllerCls()
+ServoControllerCls::ServoControllerCls()
 {
 	InitializeSerialPort();
 	InitializeServoProperties();
