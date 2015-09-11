@@ -1,0 +1,8 @@
+roscore
+rosrun speech_engine speech_engine_node
+rosrun joy joy_node
+rosrun robot_state robot_state_node
+rosrun servo_controller servo_controller_node
+rosrun motor_controller motor_controller_node
+rosrun remote_controller remote_controller_node
+rostopic echo /servo_controller/servo_array_status

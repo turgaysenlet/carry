@@ -30,6 +30,7 @@ const int JoyRotationAxis = 0;
 const int JoyHeadRotationAxis = 2;
 const int JoyIgnitionButton = 1;
 const int JoyIgnitionResetButton = 6;
+const float MaximumHeadAngle = 90.0f;
 const float MaximumSteeringAngle = 30.0f;
 /// <summary>
 /// Maximum forward travel speed in meters per second.
@@ -138,8 +139,8 @@ void RemoteControllerCls::joyDiagCallback(const diagnostic_msgs::DiagnosticArray
 
 void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-	ROS_INFO("Joy callback OK: %d, Buttons: %d,%d,%d,%d", joy_ok, joy->buttons[0],
-							joy->buttons[1], joy->buttons[2], joy->buttons[3], joy->buttons[4]);
+	//ROS_INFO("Joy callback OK: %d, Buttons: %d,%d,%d,%d", joy_ok, joy->buttons[0],
+	//						joy->buttons[1], joy->buttons[2], joy->buttons[3], joy->buttons[4]);
 	if (!joy_ok)
 	{
 
@@ -180,7 +181,7 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 						float steering = joy->axes[JoyRotationAxis];
 						float steering_degree = steering * MaximumSteeringAngle;
 						float head = joy->axes[JoyHeadRotationAxis];						
-						float head_degree = steering_degree; // head
+						float head_degree = steering * MaximumHeadAngle; // head * MaximumHeadAngle;
 
 						float positive_speed = joy->axes[JoyLinearAxisPositive];
 						// Map from [1,-1] to [0,1]
@@ -198,6 +199,7 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 						speed_steering_message.head_degree.degree = head_degree;
 
 						speed_steering_pub_.publish(speed_steering_message);
+						ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, speed_mps, steering_degree, head_degree);
 					}
 				}
 			}

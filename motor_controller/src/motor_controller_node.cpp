@@ -123,6 +123,9 @@ private:
 
 	ros::NodeHandle nh_;
 
+	ros::Publisher servo_0_control_pub_;
+	ros::Publisher servo_1_control_pub_;
+	ros::Publisher servo_2_control_pub_;
 	ros::Publisher servo_3_control_pub_;
 	ros::Publisher servo_4_control_pub_;
 	ros::Publisher servo_5_control_pub_;
@@ -140,6 +143,12 @@ MotorControllerCls::MotorControllerCls()
 	robot_state = robot_state::robot_state_constants::RobotState_Stop;
 	ignition_performed_ = false;
 	first_time_trying_ignition = true;
+	// Empty
+	servo_0_control_pub_ = nh_.advertise < servo_controller::servo_control > ("servo_controller/servo_0_control", 3);
+	// Empty
+	servo_1_control_pub_ = nh_.advertise < servo_controller::servo_control > ("servo_controller/servo_1_control", 3);
+	// Head servo
+	servo_2_control_pub_ = nh_.advertise < servo_controller::servo_control > ("servo_controller/servo_2_control", 3);
 	// Right steering servo
 	servo_3_control_pub_ = nh_.advertise < servo_controller::servo_control > ("servo_controller/servo_3_control", 3);
 	// Left steering servo
@@ -168,7 +177,13 @@ void MotorControllerCls::SetServoPosition(int channel_no, int target)
 	servo_controller::servo_control message;
 	message.servo_no = channel_no;
 	message.target = target;
-	if (channel_no == 3) {
+	if (channel_no == 0) {
+		servo_0_control_pub_.publish(message);
+	} else if (channel_no == 1) {
+		servo_1_control_pub_.publish(message);
+	} else if (channel_no == 2) {
+		servo_2_control_pub_.publish(message);
+	} else if (channel_no == 3) {
 		servo_3_control_pub_.publish(message);
 	} else if (channel_no == 4) {
 		servo_4_control_pub_.publish(message);
@@ -251,7 +266,8 @@ void MotorControllerCls::SetHead(float  head_degree)
 	else
 	{
 		target2 += (uint)(head_degree * 1500.0 / MaximumHeadAngle);
-	}	
+	}
+	ROS_INFO("SetServoPosition 2: %f, %d", head_degree, target2);
 	SetServoPosition(2, target2);
 }
 void MotorControllerCls::SetSteering(float steering_degree)
