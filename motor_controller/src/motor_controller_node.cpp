@@ -229,6 +229,8 @@ void MotorControllerCls::SetSpeed(float speed_mps)
 }
 void MotorControllerCls::SetHead(float  head_degree)
 {
+	// Invert direction
+	head_degree = -head_degree;
 	if (robot_state == robot_state::robot_state_constants::RobotState_Stop)
 	{
 		head_degree = 0;
