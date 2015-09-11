@@ -70,22 +70,22 @@ void ServoControllerCls::InitializePubSub() {
 	// Separate messages for independent control of each servo
 	servo_0_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_0_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_0_control", 4, &ServoControllerCls::servoControlCallback, this);
 	servo_1_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_1_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_1_control", 4, &ServoControllerCls::servoControlCallback, this);
 	servo_2_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_2_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_2_control", 4, &ServoControllerCls::servoControlCallback, this);
 	servo_3_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_3_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_3_control", 4, &ServoControllerCls::servoControlCallback, this);
 	servo_4_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_4_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_4_control", 4, &ServoControllerCls::servoControlCallback, this);
 	servo_5_control_sub_ =
 			nh_.subscribe < servo_controller::servo_control
-					> ("servo_controller/servo_5_control", 10, &ServoControllerCls::servoControlCallback, this);
+					> ("servo_controller/servo_5_control", 4, &ServoControllerCls::servoControlCallback, this);
 
 	// Publish initial, make sure values are initialized
 	servo_array_status_pub_.publish(servo_array_status);
@@ -98,9 +98,9 @@ void ServoControllerCls::InitializeServoProperties() {
 	const uint velocity_limit = 100;
 	const uint acceleration_limit = 20;
 
-	servo_array_status.servo[3].enabled = false;
-	servo_array_status.servo[4].enabled = false;
-	servo_array_status.servo[5].enabled = false;
+	servo_array_status.servo[0].enabled = false;
+	servo_array_status.servo[1].enabled = false;
+	servo_array_status.servo[2].enabled = false;
 	servo_array_status.servo[3].enabled = false;
 	servo_array_status.servo[4].enabled = false;
 	servo_array_status.servo[5].enabled = false;
@@ -113,47 +113,57 @@ void ServoControllerCls::InitializeServoProperties() {
 	servo_array_status.servo[5].servo_no = 5;
 
 	servo_array_status.servo[0].name = "";
-	servo_array_status.servo[1].name = "Right Wheel Encoder";
-	servo_array_status.servo[2].name = "Left Wheel Encoder";
+	servo_array_status.servo[1].name = "--Right Wheel Encoder";
+	servo_array_status.servo[2].name = "Head Servo";
 	servo_array_status.servo[3].name = "Right Steering Servo";
 	servo_array_status.servo[4].name = "Left Steering Servo";
 	servo_array_status.servo[5].name = "Main Motor";
 
 	servo_array_status.servo[0].mode = 0; // Not defined
 	servo_array_status.servo[1].mode = 2; // Digital input - wheel encoder
-	servo_array_status.servo[2].mode = 2; // Digital input - wheel encoder
+	servo_array_status.servo[2].mode = 1; // Servo control signal output - servo
 	servo_array_status.servo[3].mode = 1; // Servo control signal output - servo
 	servo_array_status.servo[4].mode = 1; // Servo control signal output - servo
 	servo_array_status.servo[5].mode = 1; // Servo control signal output - motor
 
+	servo_array_status.servo[2].target = center;
 	servo_array_status.servo[3].target = center;
 	servo_array_status.servo[4].target = center;
 	servo_array_status.servo[5].target = center;
 
+	servo_array_status.servo[2].actual = center;
 	servo_array_status.servo[3].actual = center;
 	servo_array_status.servo[4].actual = center;
 	servo_array_status.servo[5].actual = center;
 
+	servo_array_status.servo[2].center = center;
 	servo_array_status.servo[3].center = center;
 	servo_array_status.servo[4].center = center;
 	servo_array_status.servo[5].center = center;
 
+	servo_array_status.servo[2].max = max_value;
 	servo_array_status.servo[3].max = max_value;
 	servo_array_status.servo[4].max = max_value;
 	servo_array_status.servo[5].max = max_value;
 
+	servo_array_status.servo[2].min = min_value;
 	servo_array_status.servo[3].min = min_value;
 	servo_array_status.servo[4].min = min_value;
 	servo_array_status.servo[5].min = min_value;
 
+	servo_array_status.servo[2].velocity_limit = velocity_limit;
 	servo_array_status.servo[3].velocity_limit = velocity_limit;
 	servo_array_status.servo[4].velocity_limit = velocity_limit;
 	servo_array_status.servo[5].velocity_limit = velocity_limit;
 
+	servo_array_status.servo[2].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[3].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[4].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[5].acceleration_limit = acceleration_limit;
 
+	servo_array_status.servo[0].enabled = false;
+	servo_array_status.servo[1].enabled = false;
+	servo_array_status.servo[2].enabled = true;
 	servo_array_status.servo[3].enabled = true;
 	servo_array_status.servo[4].enabled = true;
 	servo_array_status.servo[5].enabled = true;
