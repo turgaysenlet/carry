@@ -27,6 +27,10 @@ const float ForwardSpeedStartConstant = 120.0f;
 const float BackwardSpeedStartConstant = 0.0f;
 
 /// <summary>
+/// Maximum head servo angle in degrees.
+/// </summary>
+const float MaximumHeadAngle = 90.0f;
+/// <summary>
 /// Maximum steering angle in degrees.
 /// </summary>
 const float MaximumSteeringAngle = 30.0f;
@@ -98,6 +102,7 @@ public:
 	MotorControllerCls();
 	void SetServoPosition(int channelNo, int targetPosition);
 	void SetSteering(float steering_degree);
+	void SetHead(float head_degree);
 	void SetSpeed(float speed_mps);
 	double CalculateMotorServoPositionFromSpeed(float speed);
 	void PerformIgnition();
@@ -206,6 +211,48 @@ void MotorControllerCls::SetSpeed(float speed_mps)
 	}
 
 	SetServoPosition(5, target);
+}
+void MotorControllerCls::SetHead(float  head_degree)
+{
+	if (robot_state == robot_state::robot_state_constants::RobotState_Stop)
+	{
+		head_degree = 0;
+	}
+	uint target2 = 6000;
+	uint center2 = servo_array_status_.servo[2].center;
+	uint max_value2 = servo_array_status_.servo[2].max;
+	uint min_value2 = servo_array_status_.servo[2].min;
+
+	if (head_degree > MaximumHeadAngle)
+	{
+		ROS_WARN("Head command sent: %0.2f is more than maximum head angle: %0.2f. Setting to maximum", head_degree, MaximumHeadAngle);
+		head_degree = MaximumHeadAngle;
+	}
+	else if (head_degree < -MaximumHeadAngle)
+	{
+		ROS_WARN("Head command sent: %0.2f is less than minimum head angle: %0.2f. Setting to minimum", head_degree, -MaximumHeadAngle);
+		head_degree = -MaximumHeadAngle;
+	}
+	if (center2 != 0 && max_value2 != 0)
+	{
+		if (head_degree == 0)
+		{
+			target2 = center2;
+		}
+		else if (head_degree > 0)
+		{
+			target2 = (uint)(head_degree * (max_value2 - center2) / MaximumHeadAngle + center2);
+		}
+		else if (head_degree < 0)
+		{
+			target2 = (uint)(head_degree * (center2 - min_value2) / MaximumHeadAngle + center2);
+		}
+	}
+	else
+	{
+		target2 += (uint)(head_degree * 1500.0 / MaximumHeadAngle);
+	}	
+	SetServoPosition(2, target2);
 }
 void MotorControllerCls::SetSteering(float steering_degree)
 {
@@ -344,6 +391,7 @@ void MotorControllerCls::Stop()
 {
 	SetSpeed(0);
 	SetSteering(0);
+	SetHead(0);
 }
 
 void MotorControllerCls::ChangeState(int new_state)
@@ -368,13 +416,14 @@ void MotorControllerCls::speedCallback(const motor_controller::speed::ConstPtr& 
 
 void MotorControllerCls::steeringCallback(const motor_controller::steering::ConstPtr& steering)
 {
-	SetSteering(steering->steering_degree);
+	SetSteering(steering->degree);
 }
 
 void MotorControllerCls::speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering)
 {
 	SetSpeed(speed_steering->speed_mps.speed_mps);
-	SetSteering(speed_steering->steering_degree.steering_degree);
+	SetSteering(speed_steering->steering_degree.degree);
+	SetHead(speed_steering->head_degree.degree);
 }
 
 void MotorControllerCls::servoStatusCallback(const servo_controller::servo_array_status::ConstPtr& servo_array_status)

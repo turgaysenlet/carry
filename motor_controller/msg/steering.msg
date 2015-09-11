@@ -1,1 +1,1 @@
-float32 steering_degree
+float32 degree

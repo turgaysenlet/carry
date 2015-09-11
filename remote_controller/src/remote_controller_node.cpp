@@ -27,6 +27,7 @@ using namespace std;
 const int JoyLinearAxisPositive = 3;
 const int JoyLinearAxisNegative = 1;
 const int JoyRotationAxis = 0;
+const int JoyHeadRotationAxis = 2;
 const int JoyIgnitionButton = 1;
 const int JoyIgnitionResetButton = 6;
 const float MaximumSteeringAngle = 30.0f;
@@ -178,6 +179,8 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 					{
 						float steering = joy->axes[JoyRotationAxis];
 						float steering_degree = steering * MaximumSteeringAngle;
+						float head = joy->axes[JoyHeadRotationAxis];						
+						float head_degree = steering_degree; // head
 
 						float positive_speed = joy->axes[JoyLinearAxisPositive];
 						// Map from [1,-1] to [0,1]
@@ -191,7 +194,8 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 						motor_controller::speed_steering speed_steering_message;
 
 						speed_steering_message.speed_mps.speed_mps = speed_mps;
-						speed_steering_message.steering_degree.steering_degree = steering_degree;
+						speed_steering_message.steering_degree.degree = steering_degree;
+						speed_steering_message.head_degree.degree = head_degree;
 
 						speed_steering_pub_.publish(speed_steering_message);
 					}
