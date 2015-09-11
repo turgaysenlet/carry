@@ -269,7 +269,6 @@ void MotorControllerCls::SetHead(float  head_degree)
 	{
 		target2 += (uint)(head_degree * 1500.0 / MaximumHeadAngle);
 	}
-	ROS_INFO("SetServoPosition 2: %f, %d", head_degree, target2);
 	SetServoPosition(2, target2);
 }
 void MotorControllerCls::SetSteering(float steering_degree)
