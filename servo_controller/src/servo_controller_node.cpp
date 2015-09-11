@@ -151,12 +151,12 @@ void ServoControllerCls::InitializeServoProperties() {
 	servo_array_status.servo[4].min = min_value;
 	servo_array_status.servo[5].min = min_value;
 
-	servo_array_status.servo[2].velocity_limit = velocity_limit * 4;
+	servo_array_status.servo[2].velocity_limit = velocity_limit;
 	servo_array_status.servo[3].velocity_limit = velocity_limit;
 	servo_array_status.servo[4].velocity_limit = velocity_limit;
 	servo_array_status.servo[5].velocity_limit = velocity_limit;
 
-	servo_array_status.servo[2].acceleration_limit = acceleration_limit * 4;
+	servo_array_status.servo[2].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[3].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[4].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[5].acceleration_limit = acceleration_limit;
