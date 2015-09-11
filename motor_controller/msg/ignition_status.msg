@@ -1,0 +1,2 @@
+bool ignition_initialized
+time last_ignition_time
