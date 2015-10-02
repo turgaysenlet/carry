@@ -5,9 +5,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
-#include <MotorController/Speed.h>
-#include <MotorController/Steering.h>
-#include <MotorController/SpeedSteering.h>
+#include <motor_controller/speed.h>
+#include <motor_controller/steering.h>
+#include <motor_controller/speed_steering.h>
 #include <cv_bridge/cv_bridge.h>
 #include <stdio.h> // standard input / output functions
 #include <string.h> // string function definitions
@@ -61,9 +61,9 @@ private:
 	ros::Publisher joint_pub_;
 	tf::TransformBroadcaster broadcaster_;
 
-	void speedCallback(const MotorController::Speed::ConstPtr& speed);
-	void steeringCallback(const MotorController::Steering::ConstPtr& steering);
-	void speedSteeringCallback(const MotorController::SpeedSteering::ConstPtr& speed_steering);
+	void speedCallback(const motor_controller::speed::ConstPtr& speed);
+	void steeringCallback(const motor_controller::steering::ConstPtr& steering);
+	void speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering);
 	bool ServeCameraRequestLeft(sensor_msgs::SetCameraInfo::Request &req, sensor_msgs::SetCameraInfo::Response &res);
 	bool ServeCameraRequestRight(sensor_msgs::SetCameraInfo::Request &req, sensor_msgs::SetCameraInfo::Response &res);
 
@@ -94,9 +94,9 @@ SimulatorImageReceiverCls::SimulatorImageReceiverCls() : it_(nh_), camera_info_m
 	Width = 0;
 	Height = 0;
 
-	speed_sub_ = nh_.subscribe < MotorController::Speed > ("MotorController/speed_control", 1, &SimulatorImageReceiverCls::speedCallback, this);
-	steering_sub_ = nh_.subscribe < MotorController::Steering > ("MotorController/steering_control", 1, &SimulatorImageReceiverCls::steeringCallback, this);
-	speed_steering_sub_ = nh_.subscribe < MotorController::SpeedSteering > ("MotorController/speed_steering_control", 1, &SimulatorImageReceiverCls::speedSteeringCallback, this);
+	speed_sub_ = nh_.subscribe < motor_controller::speed > ("motor_controller/speed_control", 1, &SimulatorImageReceiverCls::speedCallback, this);
+	steering_sub_ = nh_.subscribe < motor_controller::steering > ("motor_controller/steering_control", 1, &SimulatorImageReceiverCls::steeringCallback, this);
+	speed_steering_sub_ = nh_.subscribe < motor_controller::speed_steering > ("motor_controller/speed_steering_control", 1, &SimulatorImageReceiverCls::speedSteeringCallback, this);
 	left_raw_pub_ = it_.advertise("/stereo/left/image_raw", 1, false);
 	right_raw_pub_ = it_.advertise("/stereo/right/image_raw", 1, false);
 	joint_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
@@ -126,21 +126,21 @@ bool SimulatorImageReceiverCls::ServeCameraRequestRight(sensor_msgs::SetCameraIn
 	return true;
 }
 
-void SimulatorImageReceiverCls::speedCallback(const MotorController::Speed::ConstPtr& speed)
+void SimulatorImageReceiverCls::speedCallback(const motor_controller::speed::ConstPtr& speed)
 {
 	SetSpeed(speed->speed_mps);
 }
 
-void SimulatorImageReceiverCls::steeringCallback(const MotorController::Steering::ConstPtr& steering)
+void SimulatorImageReceiverCls::steeringCallback(const motor_controller::steering::ConstPtr& steering)
 {
-	SetSteering(steering->steering_degree);
+	SetSteering(steering->degree);
 }
 
-void SimulatorImageReceiverCls::speedSteeringCallback(const MotorController::SpeedSteering::ConstPtr& speed_steering)
+void SimulatorImageReceiverCls::speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering)
 {
-	//ROS_WARN("Received request: %f, %f", speed_steering->speed_mps.speed_mps, speed_steering->steering_degree.steering_degree);
+	//ROS_WARN("Received request: %f, %f", speed_steering->speed_mps.speed_mps, speed_steering->steering_degree.degree);
 	SetSpeed(speed_steering->speed_mps.speed_mps);
-	SetSteering(speed_steering->steering_degree.steering_degree);
+	SetSteering(speed_steering->steering_degree.degree);
 }
 
 void SimulatorImageReceiverCls::SetSpeed(float speed_mps)
@@ -232,7 +232,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 	ROS_INFO("UDP Server waiting for client on port %d", htons(server_addr_left.sin_port));
 	ROS_INFO("UDP Server waiting for client on port %d", htons(server_addr_right.sin_port));
 
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(15);
 	// message declarations
 	geometry_msgs::TransformStamped odom_trans;
 	sensor_msgs::JointState joint_state;
@@ -241,6 +241,8 @@ void SimulatorImageReceiverCls::ReceiveImages()
 	int frame_counter = 0;
 	bool keep_old_left = false;
 	bool keep_old_right = false;
+	cv::Mat image_left;
+	cv::Mat image_right;
 	while (ros::ok())
 	{
 		if (keep_old_left == false)
@@ -256,10 +258,19 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		int frame_counter_right = (int)recv_data_right[0];
 
 		ROS_INFO("Left: %d, Right: %d", frame_counter_left, frame_counter_right);
-		std::vector<char> data_left(recv_data_left+1, recv_data_left + bytes_read_left);
-		std::vector<char> data_right(recv_data_right+1, recv_data_right + bytes_read_right);
-		cv::Mat image_left = cv::imdecode(cv::Mat(data_left), 1);
-		cv::Mat image_right = cv::imdecode(cv::Mat(data_right), 1);
+		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
+
+		FILE* fl = fopen("/tmp/left.jpg","wb");
+		fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
+		fclose(fl);
+
+		FILE* fr = fopen("/tmp/right.jpg","wb");
+		fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
+		fclose(fr);
+
+		image_left = cv::imread("/tmp/left.jpg", 1);//cv::imdecode(mat_left, 1);
+		ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
+		image_right = cv::imread("/tmp/right.jpg", 1);//cv::imdecode(mat_right, 1);
 		frame_counter++;
 		if (frame_counter_left != frame_counter_right)
 		{
@@ -309,14 +320,14 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		sensor_msgs::Image image_message_disp;
 		if (ProcessStereo)
 		{
-			cv::StereoSGBM stereo(0, 64, 5);
+			/*cv::StereoSGBM stereo(0, 64, 5);
 			cv::Mat disp;
 			stereo(image_left, image_right, disp);
 
 			cv::Mat disp8;
 			disp.convertTo(disp8, CV_8U, 0.25, 0);
 			cv_bridge::CvImage cvimage_disp(header, enc::MONO8, disp8);
-			cvimage_disp.toImageMsg(image_message_disp);
+			cvimage_disp.toImageMsg(image_message_disp);*/
 		}
 
 		left_raw_pub_.publish(image_message_left);
@@ -330,6 +341,9 @@ void SimulatorImageReceiverCls::ReceiveImages()
 			disparity_pub_.publish(image_message_disp);
 		}
 
+		// Release images using deallocate (not release) otherwise memory leakge happens after imread
+		image_left.deallocate();
+		image_right.deallocate();
 		float send_data[2] = {desired_speed, desired_steering};
 		sendto(sock_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
 

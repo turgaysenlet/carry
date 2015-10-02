@@ -4,15 +4,17 @@ project(simulator_image_receiver)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(OpenCV 2.3.3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
   camera_info_manager
   image_proc
   image_transport
   motor_controller
-  opencv3
+  opencv_candidate
   roscpp
   sensor_msgs
   std_msgs
+  cv_bridge
   tf
 )
 
@@ -108,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES simulator_image_receiver
-#  CATKIN_DEPENDS camera_info_manager image_proc image_transport motor_controller opencv3 roscpp sensor_msgs std_msgs tf
+#  CATKIN_DEPENDS camera_info_manager image_proc image_transport motor_controller opencv_candidate cv_bridge roscpp sensor_msgs std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -134,16 +136,18 @@ include_directories(
 # add_dependencies(simulator_image_receiver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(simulator_image_receiver_node src/simulator_image_receiver_node.cpp)
+add_executable(simulator_image_receiver_node src/simulator_image_receiver_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(simulator_image_receiver_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(simulator_image_receiver_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(simulator_image_receiver_node
+  ${catkin_LIBRARIES}  
+  ${opencv_candidate_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
 
 #############
 ## Install ##

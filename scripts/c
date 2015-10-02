@@ -1,3 +1,4 @@
 cd ~/catkin_ws/
 clear;
-catkin_make
+catkin_make -j6 -l6;
+don;
