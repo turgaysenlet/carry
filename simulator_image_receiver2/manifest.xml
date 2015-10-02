@@ -1,0 +1,22 @@
+<package>
+  <description brief="SimulatorImageReceiver">
+
+     SimulatorImageReceiver
+
+  </description>
+  <author>Resuser</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/SimulatorImageReceiver</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="image_proc"/>
+  <depend package="sensor_msgs"/>
+  <depend package="std_msgs"/>
+  <depend package="image_transport"/>
+  <depend package="camera_info_manager"/>
+  <depend package="MotorController"/>
+  <depend package="tf"/>  
+</package>
+
+
