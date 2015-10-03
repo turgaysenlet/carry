@@ -87,8 +87,8 @@ SimulatorImageReceiverCls::SimulatorImageReceiverCls() : it_(nh_), camera_info_m
 	desired_speed = 0;
 	desired_steering = 0;
 
-	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/calibration/camera/simulator/left.yaml");	
-	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/calibration/camera/simulator/right.yaml");
+	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/left.yaml");	
+	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/right.yaml");
 
 	//ROS_INFO("Camera Info Load Result: %d", (int)result);
 	Width = 0;
