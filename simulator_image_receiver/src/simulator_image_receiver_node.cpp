@@ -87,8 +87,8 @@ SimulatorImageReceiverCls::SimulatorImageReceiverCls() : it_(nh_), camera_info_m
 	desired_speed = 0;
 	desired_steering = 0;
 
-	camera_info_manager_left_.loadCameraInfo("file://${ROS_HOME}/robotts/Calibration/Camera/Simulator/left.yaml");
-	camera_info_manager_right_.loadCameraInfo("file://${ROS_HOME}/robotts/Calibration/Camera/Simulator/right.yaml");
+	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/calibration/camera/simulator/left.yaml");	
+	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/calibration/camera/simulator/right.yaml");
 
 	//ROS_INFO("Camera Info Load Result: %d", (int)result);
 	Width = 0;
@@ -183,6 +183,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		ROS_ERROR("Socket creation problem");
 		exit(1);
 	}
+	fcntl(sock_left, F_SETFL, O_NONBLOCK); 
 
 	server_addr_left.sin_family = AF_INET;
 	server_addr_left.sin_port = htons(2000);
@@ -201,7 +202,8 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		ROS_ERROR("Socket creation problem");
 		exit(1);
 	}
-
+	fcntl(sock_right, F_SETFL, O_NONBLOCK); 
+	
 	server_addr_right.sin_family = AF_INET;
 	server_addr_right.sin_port = htons(2001);
 	server_addr_right.sin_addr.s_addr = INADDR_ANY;
