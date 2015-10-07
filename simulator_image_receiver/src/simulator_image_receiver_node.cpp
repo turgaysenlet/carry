@@ -222,7 +222,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		exit(1);
 	}
 	hostent *host;
-	host = (hostent *) gethostbyname((char *)"10.0.0.2");
+	host = (hostent *) gethostbyname((char *)"192.168.1.70");
 	client_addr_command.sin_family = AF_INET;
 	client_addr_command.sin_port = htons(3000);
 	client_addr_command.sin_addr = *((in_addr *)host->h_addr);
@@ -261,91 +261,94 @@ void SimulatorImageReceiverCls::ReceiveImages()
 
 		ROS_INFO("Left: %d, Right: %d", frame_counter_left, frame_counter_right);
 		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
-
-		FILE* fl = fopen("/tmp/left.jpg","wb");
-		fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
-		fclose(fl);
-
-		FILE* fr = fopen("/tmp/right.jpg","wb");
-		fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
-		fclose(fr);
-
-		image_left = cv::imread("/tmp/left.jpg", 1);//cv::imdecode(mat_left, 1);
-		ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
-		image_right = cv::imread("/tmp/right.jpg", 1);//cv::imdecode(mat_right, 1);
-		frame_counter++;
-		if (frame_counter_left != frame_counter_right)
+		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
-			if (frame_counter_left > frame_counter_right)
+			FILE* fl = fopen("/tmp/left.jpg","wb");
+			fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
+			fclose(fl);
+
+			FILE* fr = fopen("/tmp/right.jpg","wb");
+			fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
+			fclose(fr);
+
+			image_left = cv::imread("/tmp/left.jpg", 1);//cv::imdecode(mat_left, 1);
+			ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
+			image_right = cv::imread("/tmp/right.jpg", 1);//cv::imdecode(mat_right, 1);
+			frame_counter++;
+			if (frame_counter_left != frame_counter_right)
 			{
-				ROS_WARN("Frame counters not match, keeping left. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
-				keep_old_right = false;
-				keep_old_left = true;
+				if (frame_counter_left > frame_counter_right)
+				{
+					ROS_WARN("Frame counters not match, keeping left. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
+					keep_old_right = false;
+					keep_old_left = true;
+				}
+				else
+				{
+					ROS_WARN("Frame counters not match, keeping right. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
+					keep_old_right = true;
+					keep_old_left = false;
+				}
+				continue;
 			}
 			else
 			{
-				ROS_WARN("Frame counters not match, keeping right. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
-				keep_old_right = true;
+				keep_old_right = false;
 				keep_old_left = false;
 			}
-			continue;
+
+			if (image_left.cols != image_right.cols || image_left.rows != image_right.rows)
+			{
+				ROS_WARN("Image sizes not match. Left: %dx%d, Right: %dx%d", image_left.cols, image_left.rows, image_right.cols, image_right.rows);
+				continue;
+			}
+
+			if (Width != image_left.cols || Height != image_left.rows)
+			{
+				Width = image_left.cols;
+				Height = image_left.rows;
+				ROS_INFO("New image resolution: %dx%d", Width, Height);
+			}
+
+			std_msgs::Header header;
+			header.seq = frame_counter;
+			sensor_msgs::Image image_message_left;
+			cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
+			cvimage_left.toImageMsg(image_message_left);
+
+			sensor_msgs::Image image_message_right;
+			cv_bridge::CvImage cvimage_right(header, enc::BGR8, image_right);
+			cvimage_right.toImageMsg(image_message_right);
+
+			sensor_msgs::Image image_message_disp;
+			if (ProcessStereo)
+			{
+				/*cv::StereoSGBM stereo(0, 64, 5);
+				cv::Mat disp;
+				stereo(image_left, image_right, disp);
+
+				cv::Mat disp8;
+				disp.convertTo(disp8, CV_8U, 0.25, 0);
+				cv_bridge::CvImage cvimage_disp(header, enc::MONO8, disp8);
+				cvimage_disp.toImageMsg(image_message_disp);*/
+			}
+
+			left_raw_pub_.publish(image_message_left);
+			left_info_pub_.publish(camera_info_manager_left_.getCameraInfo());
+
+			right_raw_pub_.publish(image_message_right);
+			right_info_pub_.publish(camera_info_manager_right_.getCameraInfo());
+
+			if (ProcessStereo)
+			{
+				disparity_pub_.publish(image_message_disp);
+			}
+
+			// Release images using deallocate (not release) otherwise memory leakge happens after imread
+			image_left.deallocate();
+			image_right.deallocate();
 		}
-		else
-		{
-			keep_old_right = false;
-			keep_old_left = false;
-		}
-
-		if (image_left.cols != image_right.cols || image_left.rows != image_right.rows)
-		{
-			ROS_WARN("Image sizes not match. Left: %dx%d, Right: %dx%d", image_left.cols, image_left.rows, image_right.cols, image_right.rows);
-			continue;
-		}
-
-		if (Width != image_left.cols || Height != image_left.rows)
-		{
-			Width = image_left.cols;
-			Height = image_left.rows;
-			ROS_INFO("New image resolution: %dx%d", Width, Height);
-		}
-
-		std_msgs::Header header;
-		header.seq = frame_counter;
-		sensor_msgs::Image image_message_left;
-		cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
-		cvimage_left.toImageMsg(image_message_left);
-
-		sensor_msgs::Image image_message_right;
-		cv_bridge::CvImage cvimage_right(header, enc::BGR8, image_right);
-		cvimage_right.toImageMsg(image_message_right);
-
-		sensor_msgs::Image image_message_disp;
-		if (ProcessStereo)
-		{
-			/*cv::StereoSGBM stereo(0, 64, 5);
-			cv::Mat disp;
-			stereo(image_left, image_right, disp);
-
-			cv::Mat disp8;
-			disp.convertTo(disp8, CV_8U, 0.25, 0);
-			cv_bridge::CvImage cvimage_disp(header, enc::MONO8, disp8);
-			cvimage_disp.toImageMsg(image_message_disp);*/
-		}
-
-		left_raw_pub_.publish(image_message_left);
-		left_info_pub_.publish(camera_info_manager_left_.getCameraInfo());
-
-		right_raw_pub_.publish(image_message_right);
-		right_info_pub_.publish(camera_info_manager_right_.getCameraInfo());
-
-		if (ProcessStereo)
-		{
-			disparity_pub_.publish(image_message_disp);
-		}
-
-		// Release images using deallocate (not release) otherwise memory leakge happens after imread
-		image_left.deallocate();
-		image_right.deallocate();
+		
 		float send_data[2] = {desired_speed, desired_steering};
 		sendto(sock_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
 
