@@ -263,17 +263,23 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
 		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
-			FILE* fl = fopen("/tmp/left.jpg","wb");
-			fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
-			fclose(fl);
+			// FILE* fl = fopen("/tmp/left.jpg","wb");
+			// fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
+			// fclose(fl);
 
-			FILE* fr = fopen("/tmp/right.jpg","wb");
-			fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
-			fclose(fr);
+			// FILE* fr = fopen("/tmp/right.jpg","wb");
+			// fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
+			// fclose(fr);
 
-			image_left = cv::imread("/tmp/left.jpg", 1);//cv::imdecode(mat_left, 1);
+			// image_left = cv::imread("/tmp/left.jpg", 1);
+			// image_right = cv::imread("/tmp/right.jpg", 1);			
+			std::vector<char> data_left(recv_data_left, recv_data_left + bytes_read_left);
+			std::vector<char> data_right(recv_data_right, recv_data_right + bytes_read_right);
+			image_left = cv::imdecode(data_left, -1);
+			image_right = cv::imdecode(data_right, -1);
+			cv::imwrite("/tmp/left.jpg", image_left);
 			ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
-			image_right = cv::imread("/tmp/right.jpg", 1);//cv::imdecode(mat_right, 1);
+
 			frame_counter++;
 			if (frame_counter_left != frame_counter_right)
 			{
@@ -310,12 +316,13 @@ void SimulatorImageReceiverCls::ReceiveImages()
 				ROS_INFO("New image resolution: %dx%d", Width, Height);
 			}
 
+			ROS_INFO("Left");
 			std_msgs::Header header;
 			header.seq = frame_counter;
 			sensor_msgs::Image image_message_left;
 			cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
 			cvimage_left.toImageMsg(image_message_left);
-
+			ROS_INFO("Right");
 			sensor_msgs::Image image_message_right;
 			cv_bridge::CvImage cvimage_right(header, enc::BGR8, image_right);
 			cvimage_right.toImageMsg(image_message_right);
@@ -345,8 +352,8 @@ void SimulatorImageReceiverCls::ReceiveImages()
 			}
 
 			// Release images using deallocate (not release) otherwise memory leakge happens after imread
-			image_left.deallocate();
-			image_right.deallocate();
+			//image_left.deallocate();
+			//image_right.deallocate();
 		}
 		
 		float send_data[2] = {desired_speed, desired_steering};
