@@ -5,8 +5,8 @@ project(remote_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  #message_generation
   roscpp
-  rospy
   std_msgs
   sensor_msgs
   speech_engine
@@ -70,15 +70,15 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  sensor_msgs  
-  speech_engine
-  robot_state
-  servo_controller
-  motor_controller
-)
+#generate_messages(
+#  DEPENDENCIES
+#  std_msgs
+#  sensor_msgs  
+#  speech_engine
+#  robot_state
+#  servo_controller
+#  motor_controller
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

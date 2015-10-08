@@ -1,0 +1,9 @@
+cd ~/catkin_ws
+catkin_make --pkg speech_engine
+catkin_make --pkg robot_state
+catkin_make --pkg servo_controller
+catkin_make --pkg motor_controller
+catkin_make --pkg remote_controller
+catkin_make --pkg simulator_image_receiver
+catkin_make --pkg depth_image_sender
+don

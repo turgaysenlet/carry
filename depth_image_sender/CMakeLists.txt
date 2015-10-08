@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(motor_controller)
+project(depth_image_sender)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(OpenCV 2.3.3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
+  image_proc
+  image_transport
+  opencv_candidate
   roscpp
-  rospy
+  sensor_msgs
   std_msgs
-  sensor_msgs  
-  speech_engine
-  robot_state
-  servo_controller
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -49,14 +49,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  ignition_control.msg
-  ignition_status.msg
-  speed.msg
-  speed_steering.msg
-  steering.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -73,11 +70,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  sensor_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   sensor_msgs#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,8 +106,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES motor_controller
-#  CATKIN_DEPENDS robot_state roscpp rospy sensor_msgs servo_controller speech_engine std_msgs
+#  LIBRARIES depth_image_sender
+#  CATKIN_DEPENDS image_proc image_transport opencv_candidate cv_bridge roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -127,25 +123,27 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(motor_controller
-#   src/${PROJECT_NAME}/motor_controller.cpp
+# add_library(depth_image_sender
+#   src/${PROJECT_NAME}/depth_image_sender.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(motor_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(depth_image_sender ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(motor_controller_node src/motor_controller_node.cpp)
+add_executable(depth_image_sender_node src/depth_image_sender_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(motor_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(depth_image_sender_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motor_controller_node
-  ${catkin_LIBRARIES}
+target_link_libraries(depth_image_sender_node
+  ${catkin_LIBRARIES}  
+  ${opencv_candidate_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 
 #############
@@ -163,7 +161,7 @@ target_link_libraries(motor_controller_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS motor_controller motor_controller_node
+# install(TARGETS depth_image_sender depth_image_sender_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -188,7 +186,7 @@ target_link_libraries(motor_controller_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_motor_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_depth_image_sender.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
