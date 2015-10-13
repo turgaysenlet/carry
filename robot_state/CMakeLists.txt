@@ -7,8 +7,7 @@ project(robot_state)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
-  roscpp
-  roscpp
+  roscpp  
   sensor_msgs
   speech_engine
 )
