@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   robot_state
   roscpp
-  rospy
   sensor_msgs
   servo_controller
   speech_engine
@@ -54,8 +53,8 @@ add_message_files(
   ignition_control.msg
   ignition_status.msg
   speed.msg
-  speed_steering.msg
   steering.msg
+  speed_steering.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -75,7 +74,8 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  sensor_msgs#   std_msgs
+  sensor_msgs
+  std_msgs
 )
 
 ################################################
@@ -110,7 +110,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES motor_controller
-#  CATKIN_DEPENDS robot_state roscpp rospy sensor_msgs servo_controller speech_engine std_msgs
+#  CATKIN_DEPENDS robot_state roscpp sensor_msgs servo_controller speech_engine std_msgs
 #  DEPENDS system_lib
 )
 
