@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   roscpp
-  rospy
 )
 
 ## System dependencies are found with CMake's conventions
@@ -102,7 +101,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES speech_engine
-#  CATKIN_DEPENDS roscpp rospy
+#  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
 
