@@ -1,0 +1,20 @@
+image_width: 512
+image_height: 384
+camera_name: right_simulation
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [169.750508, 0.000000, 256.125315, 0.000000, 169.786841, 192.109346, 0.000000, 0.000000, 1.000000]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.000270, 0.000125, 0.000116, 0.000004, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [0.999848, -0.000402, -0.017436, 0.000402, 1.000000, 0.000014, 0.017436, -0.000021, 0.999848]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [175.423221, 0.000000, 266.837990, -22.448381, 0.000000, 175.423221, 192.228642, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]

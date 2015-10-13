@@ -1,0 +1,1 @@
+rosrun image_view disparity_view image:=/stereo/disparity

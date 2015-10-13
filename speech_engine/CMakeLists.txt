@@ -6,8 +6,8 @@ project(speech_engine)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   message_generation
-  std_msgs
   roscpp
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -66,7 +66,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
+   std_msgs
 )
 
 ################################################
@@ -135,9 +135,9 @@ add_executable(speech_engine_node src/speech_engine_node.cpp)
 # add_dependencies(speech_engine_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(speech_engine_node
-   ${catkin_LIBRARIES} espeak pthread portaudio sonic
- )
+target_link_libraries(speech_engine_node
+  ${catkin_LIBRARIES} espeak pthread portaudio sonic
+)
 
 #############
 ## Install ##

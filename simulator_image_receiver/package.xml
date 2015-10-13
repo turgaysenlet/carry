@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>remote_controller</name>
+  <name>simulator_image_receiver</name>
   <version>0.0.0</version>
-  <description>The remote_controller package</description>
+  <description>The simulator_image_receiver package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/remote_controller</url> -->
+  <!-- <url type="website">http://wiki.ros.org/simulator_image_receiver</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -40,20 +40,25 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>speech_engine</build_depend>
-  <build_depend>robot_state</build_depend>
-  <build_depend>servo_controller</build_depend>
+  <build_depend>camera_info_manager</build_depend>
+  <build_depend>image_proc</build_depend>
+  <build_depend>image_transport</build_depend>
   <build_depend>motor_controller</build_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>speech_engine</run_depend>
-  <run_depend>robot_state</run_depend>
-  <run_depend>servo_controller</run_depend>
+  <build_depend>opencv_candidate</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <run_depend>camera_info_manager</run_depend>
+  <run_depend>image_proc</run_depend>
+  <run_depend>image_transport</run_depend>
   <run_depend>motor_controller</run_depend>
+  <run_depend>opencv_candidate</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

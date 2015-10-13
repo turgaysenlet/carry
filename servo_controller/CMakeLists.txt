@@ -5,10 +5,10 @@ project(servo_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  robot_state
+  message_generation  
   roscpp
   std_msgs
+  robot_state
 )
 
 ## System dependencies are found with CMake's conventions
@@ -70,6 +70,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  robot_state
 )
 
 ################################################

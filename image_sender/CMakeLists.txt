@@ -1,17 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(remote_controller)
+project(image_sender)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(OpenCV 2.3.3 REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
-  roscpp  
-  std_msgs
+  image_proc
+  image_transport
+  opencv_candidate
+  roscpp
   sensor_msgs
-  speech_engine
-  robot_state
-  servo_controller
-  motor_controller  
+  std_msgs
+  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -69,15 +70,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES
-#  std_msgs
-#  sensor_msgs  
-#  speech_engine
-#  robot_state
-#  servo_controller
-#  motor_controller
-#)
+# generate_messages(
+#   DEPENDENCIES
+#   sensor_msgs#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,8 +106,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES remote_controller
-#  CATKIN_DEPENDS motor_controller robot_state roscpp sensor_msgs servo_controller speech_engine std_msgs
+#  LIBRARIES image_sender
+#  CATKIN_DEPENDS image_proc image_transport opencv_candidate cv_bridge roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
@@ -127,25 +123,27 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(remote_controller
-#   src/${PROJECT_NAME}/remote_controller.cpp
+# add_library(image_sender
+#   src/${PROJECT_NAME}/image_sender.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(remote_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(image_sender ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(remote_controller_node src/remote_controller_node.cpp)
+add_executable(image_sender_node src/image_sender_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(remote_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(image_sender_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(remote_controller_node
-  ${catkin_LIBRARIES}
+target_link_libraries(image_sender_node
+  ${catkin_LIBRARIES}  
+  ${opencv_candidate_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )
 
 #############
@@ -163,7 +161,7 @@ target_link_libraries(remote_controller_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS remote_controller remote_controller_node
+# install(TARGETS image_sender image_sender_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -188,7 +186,7 @@ target_link_libraries(remote_controller_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_remote_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_image_sender.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

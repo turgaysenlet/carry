@@ -6,12 +6,12 @@ project(motor_controller)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   message_generation
-  robot_state
   roscpp
-  sensor_msgs
-  servo_controller
-  speech_engine
   std_msgs
+  sensor_msgs
+  speech_engine
+  robot_state
+  servo_controller
 )
 
 ## System dependencies are found with CMake's conventions
@@ -74,8 +74,8 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  sensor_msgs
   std_msgs
+  sensor_msgs
 )
 
 ################################################

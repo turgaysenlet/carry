@@ -1,0 +1,2 @@
+echo Running stereo processor
+roslaunch ps4eye stereo2.launch
