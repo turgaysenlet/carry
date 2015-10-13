@@ -7,8 +7,7 @@ project(remote_controller)
 find_package(catkin REQUIRED COMPONENTS
   motor_controller
   robot_state
-  roscpp
-  rospy
+  roscpp  
   sensor_msgs
   servo_controller
   speech_engine
@@ -107,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES remote_controller
-#  CATKIN_DEPENDS motor_controller robot_state roscpp rospy sensor_msgs servo_controller speech_engine std_msgs
+#  CATKIN_DEPENDS motor_controller robot_state roscpp sensor_msgs servo_controller speech_engine std_msgs
 #  DEPENDS system_lib
 )
 
