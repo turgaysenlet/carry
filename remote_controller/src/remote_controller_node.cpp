@@ -3,9 +3,9 @@
 #include <std_msgs/Bool.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
 #include <diagnostic_msgs/DiagnosticArray.h>
-#include <motor_controller/speed.h>
-#include <motor_controller/steering.h>
 #include <motor_controller/speed_steering.h>
+#include <motor_controller/steering.h>
+#include <motor_controller/speed.h>
 #include <motor_controller/ignition_control.h>
 #include <robot_state/robot_state_constants.h>
 #include <robot_state/robot_state.h>
@@ -86,6 +86,7 @@ RemoteControllerCls::RemoteControllerCls()
 	robot_state_sub_ = nh_.subscribe < robot_state::robot_state > ("robot_state/robot_state", 10, &RemoteControllerCls::robotStateCallback, this);
 	robot_state_change_request_pub_ = nh_.advertise < robot_state::robot_state> ("robot_state/robot_state_change_request", 1, false);
 }
+
 void RemoteControllerCls::heartBeatStopCallback(const std_msgs::Bool::ConstPtr& stop)
 {
 	if (robot_state != robot_state::robot_state_constants::RobotState_Stop)
