@@ -76,10 +76,10 @@ void ObstableDetectorCls::disparityCallback(
 					depth_image.at<float>(j, i) = d;
 					int y = (int)(d*128.0f);
 					if (y < 0) y = 0;
-					if (y > 63) y = 63;
-					int x = i / 8;
+					if (y > top_view_image.cols - 1) y = top_view_image.cols - 1;
+					int x = (i - depth_image.cols / 2) / 8 + top_view_image.cols / 2;
 					if (x < 0) x = 0;
-					if (x > 63) x = 63;
+					if (x > top_view_image.cols - 1) x = top_view_image.cols - 1;
 					
 					top_view_image.at<float>(y, x) += 0.2f;
 				} 
