@@ -54,8 +54,11 @@ void ObstableDetectorCls::disparityCallback(
 	ROS_INFO("Disparity image converted.");	
 	ROS_INFO("Image size %dx%d", disp_image.cols, disp_image.rows);
 	// Top view grayscale image
-	cv::Mat depth_image(384, 512, CV_32FC1, cv::Scalar(0));	
-	cv::Mat top_view_image(64, 64, CV_32FC1, cv::Scalar(0));	
+	cv::Mat depth_image(disp_image.rows, disp_image.cols, CV_32FC1, cv::Scalar(0));	
+	cv::Mat top_view_image(64, 64, CV_32FC1, cv::Scalar(0));
+	float xk = (float)disp_image.cols / (float)64;
+	float yk = (float)disp_image.rows / (float)64;
+	float dk = 256.0f;
 	
 	//disp_image.convertTo(depth_image, CV_32FC1, 1.0, 0);
 	
@@ -70,14 +73,14 @@ void ObstableDetectorCls::disparityCallback(
 			}
 			else 
 			{								
-				if (disp_image.at<float>(j, i) / jj > 35)
+				if (disp_image.at<float>(j, i) / jj > 45)
 				{
 					float d = 1.0f / disp_image.at<float>(j, i);
 					depth_image.at<float>(j, i) = d;
-					int y = (int)(d*128.0f);
+					int y = (int)(d*dk);
 					if (y < 0) y = 0;
 					if (y > top_view_image.cols - 1) y = top_view_image.cols - 1;
-					int x = (i - depth_image.cols / 2) / 8 + top_view_image.cols / 2;
+					int x = (int)((depth_image.cols / 2 - i) / xk + top_view_image.cols / 2);
 					if (x < 0) x = 0;
 					if (x > top_view_image.cols - 1) x = top_view_image.cols - 1;
 					
