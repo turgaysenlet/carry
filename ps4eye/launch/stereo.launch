@@ -83,6 +83,7 @@
   <group ns="stereo">
     <include file="$(find stereo_image_proc)/launch/stereo_image_proc.launch">
       <arg name="manager" value="/$(arg manager)" />
+	  		
     </include>
   </group>
 
