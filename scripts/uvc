@@ -1,0 +1,8 @@
+echo Current exposure mode (Auto=0, Shutter=2)
+uvcdynctrl --get "Exposure, Auto"
+echo Setting exposure mode to Shutter=2
+uvcdynctrl --set "Exposure, Auto" 2
+echo Setting exposure mode to Auto=0
+uvcdynctrl --set "Exposure, Auto" 0
+echo New exposure mode (Auto=0, Shutter=2)
+uvcdynctrl --get "Exposure, Auto"
