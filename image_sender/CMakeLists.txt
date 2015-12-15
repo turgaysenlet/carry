@@ -4,15 +4,16 @@ project(image_sender)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(OpenCV 2.3.3 REQUIRED)
+#find_package(OpenCV 2.3.3 REQUIRED)
+find_package(OpenCV)
 find_package(catkin REQUIRED COMPONENTS
   image_proc
   image_transport
-  opencv_candidate
+  #opencv_candidate
+  cv_bridge
   roscpp
   sensor_msgs
   std_msgs
-  cv_bridge
 )
 
 ## System dependencies are found with CMake's conventions
@@ -121,6 +122,8 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 
 ## Declare a C++ library
 # add_library(image_sender
@@ -142,7 +145,7 @@ add_dependencies(image_sender_node ${${PROJECT_NAME}_gencpp} ${${PROJECT_NAME}_E
 ## Specify libraries to link a library or executable target against
 target_link_libraries(image_sender_node
   ${catkin_LIBRARIES}  
-  ${opencv_candidate_LIBRARIES}
+  #${opencv_candidate_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 

@@ -1,0 +1,14 @@
+clear
+rosnode kill /AutonomousController
+rosnode kill /MotorController
+rosnode kill /RemoteController
+rosnode kill /RobotStateCls
+rosnode kill /ServoController
+rosnode kill /SpeechEngine
+rosnode kill /ObstableDetector
+rosnode kill /joy_node
+echo Cleaning up rest of the nodes
+echo y | rosnode cleanup
+echo Done
+echo List of remaining nodes:
+rosnode list

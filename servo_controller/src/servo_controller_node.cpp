@@ -41,14 +41,14 @@ private:
 
 void ServoControllerCls::InitializeSerialPort() {
 	// Make sure to set the servo controller to Dual USB mode
-	serial_port = open("/dev/ttyACM1", O_RDWR | O_NOCTTY | O_NDELAY);
+	serial_port = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
 	if (serial_port < 0)
 	{
-		ROS_WARN("Cannot open servo controller serial port on /dev/ttyACM1. Make sure you have correct permissions. Port no: %d", serial_port);
+		ROS_WARN("Cannot open servo controller serial port on /dev/ttyACM0. Make sure you have correct permissions. Port no: %d", serial_port);
 	}
 	else
 	{
-		ROS_LOG(Info, ROSCONSOLE_DEFAULT_NAME, "Opened servo controller serial port on /dev/ttyACM1. Port no: %d", serial_port);
+		ROS_LOG(Info, ROSCONSOLE_DEFAULT_NAME, "Opened servo controller serial port on /dev/ttyACM0. Port no: %d", serial_port);
 		//printf("Opened ACM1: %d\r\n", (int) (serial_port));
 	}
 }
@@ -95,7 +95,7 @@ void ServoControllerCls::InitializePubSub() {
 void ServoControllerCls::InitializeServoProperties() {
 	const uint center = 6000;
 	const uint max_value = 8000;
-	const uint min_value = 4000;
+	const uint min_value = 3000;
 	const uint velocity_limit = 100;
 	const uint acceleration_limit = 20;
 

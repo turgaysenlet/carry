@@ -4,11 +4,12 @@ project(obstable_detector)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(OpenCV 2.3.3 REQUIRED)
+#find_package(OpenCV 2.3.3 REQUIRED)
+find_package(OpenCV)
 find_package(catkin REQUIRED COMPONENTS
   image_proc
   image_transport
-  opencv_candidate
+  #opencv_candidate
   roscpp
   sensor_msgs
   std_msgs
@@ -121,6 +122,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 ## Declare a C++ library
 # add_library(obstable_detector
@@ -142,7 +144,7 @@ add_dependencies(obstable_detector_node ${${PROJECT_NAME}_gencpp} ${${PROJECT_NA
 ## Specify libraries to link a library or executable target against
 target_link_libraries(obstable_detector_node
   ${catkin_LIBRARIES}  
-  ${opencv_candidate_LIBRARIES}
+  #${opencv_candidate_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 

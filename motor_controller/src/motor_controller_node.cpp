@@ -37,36 +37,36 @@ const float MaximumSteeringAngle = 30.0f;
 /// <summary>
 /// Maximum forward travel speed in meters per second.
 /// </summary>
-const float MaximumForwardSpeed = 4.1f;
+const float MaximumForwardSpeed = 1.0f;//4.1f;
 /// <summary>
 /// Maximum reverse travel speed in meters per second.
 /// </summary>
-const float MaximumReverseSpeed = -4.1f;
+const float MaximumReverseSpeed = -0.8f;//-4.1f;
 /// <summary>
 /// Minimum forward travel speed in meters per second.
 /// Below this value motor does not work properly.
 /// </summary>
-const float MinimumSpeed = 0.2f;
+const float MinimumSpeed = 0.2f;//0.2f;
 /// <summary>
 /// Normal travel speed in meters per second.
 /// </summary>
-const float NormalSpeed = 1.0f;
+const float NormalSpeed = 1.0f;//1.0f;
 /// <summary>
 /// Slow travel speed in meters per second.
 /// </summary>
-const float SlowSpeed = 0.45f;
+const float SlowSpeed = 0.45f;//0.45f;
 /// <summary>
 /// Extra slow travel speed in meters per second.
 /// </summary>
-const float ExtraSlowSpeed = 0.28f;
+const float ExtraSlowSpeed = 0.3f;//0.28f;
 /// <summary>
 /// Fast travel speed in meters per second.
 /// </summary>
-const float FastSpeed = 2.0f;
+const float FastSpeed = 1.0f;//2.0f;
 /// <summary>
 /// Extra fast travel speed in meters per second. Not suitable for indoors.
 /// </summary>
-const float ExtraFastSpeed = 4.0f;
+const float ExtraFastSpeed = 1.0f;//4.0f;
 /// <summary>
 /// Stop speed.
 /// </summary>
@@ -95,6 +95,9 @@ const float IgnitionStep0SleepSeconds = 1;
 const float IgnitionStep1SleepSeconds = 2;
 const float IgnitionStep2SleepSeconds = 2;
 const float IgnitionStep3SleepSeconds = 2;
+
+float desired_speed = 0;
+float desired_speed_final = 0;
 
 class MotorControllerCls
 {
@@ -174,6 +177,7 @@ MotorControllerCls::MotorControllerCls()
 
 void MotorControllerCls::SetServoPosition(int channel_no, int target)
 {
+	ROS_INFO("Speed sent: %0.2f, Speed: %0.2f, target: %d, servono: %d", desired_speed, desired_speed_final, target, channel_no);
 	servo_controller::servo_control message;
 	message.servo_no = channel_no;
 	message.target = target;
@@ -193,6 +197,7 @@ void MotorControllerCls::SetServoPosition(int channel_no, int target)
 }
 void MotorControllerCls::SetSpeed(float speed_mps)
 {
+	desired_speed = speed_mps;
 	printf("speed_mps: %0.2f\n", speed_mps);
 	if (robot_state == robot_state::robot_state_constants::RobotState_Stop)
 	{
@@ -204,12 +209,12 @@ void MotorControllerCls::SetSpeed(float speed_mps)
 	if (speed_mps > MaximumForwardSpeed)
 	{
 		ROS_WARN("Speed command sent: %0.2f is more than maximum forward speed: %0.2f. Setting to maximum", speed_mps, MaximumForwardSpeed);
-		speed_mps = 0;//MaximumForwardSpeed;
+		speed_mps = MaximumForwardSpeed;
 	}
 	else if (speed_mps < MaximumReverseSpeed)
 	{
 		ROS_WARN("Speed command sent: %0.2f is less than maximum reverse speed: %0.2f. Setting to minimum", speed_mps, MaximumReverseSpeed);
-		speed_mps = 0;//MaximumReverseSpeed;
+		speed_mps = MaximumReverseSpeed;
 	}
 
 	if (speed_mps == 0)
@@ -225,6 +230,7 @@ void MotorControllerCls::SetSpeed(float speed_mps)
 		target = (uint)(speed_mps * SpeedConstant + center);
 	}
 
+	desired_speed_final = speed_mps;
 	SetServoPosition(5, target);
 }
 void MotorControllerCls::SetHead(float  head_degree)

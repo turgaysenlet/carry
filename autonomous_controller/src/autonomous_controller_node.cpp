@@ -1,4 +1,11 @@
 #include <ros/ros.h>
+#include <sensor_msgs/Image.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <image_transport/image_transport.h>
+#include <sensor_msgs/image_encodings.h>
+#include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/Bool.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
@@ -40,18 +47,23 @@ const float MaximumForwardSpeed = 4.1f;
 /// Maximum reverse travel speed in meters per second.
 /// </summary>
 const float MaximumReverseSpeed = -4.1f;
+const float rate = 5;
+const float stop_counter_seconds = 3.0f;
+int counter = 0;
 
 class AutonomousControllerCls
 {
 public:
 	AutonomousControllerCls();
-
+	void Run();
+	
 private:
 	void robotStateCallback(const robot_state::robot_state::ConstPtr& state);
 	void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
 	void heartBeatStopCallback(const std_msgs::Bool::ConstPtr& stop);
 	void joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag);
 	void ChangeState(int new_state);
+	void topViewImageCallback(const sensor_msgs::Image::ConstPtr& image_msg);
 	ros::NodeHandle nh_;
 
 	ros::Publisher ignition_control_pub_;
@@ -63,6 +75,7 @@ private:
 	ros::Publisher robot_state_change_request_pub_;
 	ros::Publisher speech_pub_;
 	bool force_next_ignition_;
+	ros::Subscriber image_sub_;
 	int robot_state;
 	bool joy_ok;
 };
@@ -81,15 +94,41 @@ AutonomousControllerCls::AutonomousControllerCls()
 	joy_diag_sub_ = nh_.subscribe < diagnostic_msgs::DiagnosticArray> ("diagnostics", 3, &AutonomousControllerCls::joyDiagCallback, this);
 	speed_steering_pub_ = nh_.advertise < motor_controller::speed_steering
 			> ("motor_controller/speed_steering_control", 1);
-	ignition_control_pub_ = nh_.advertise < motor_controller::ignition_control
-			> ("motor_controller/ignition_control", 1);
 	robot_state_sub_ = nh_.subscribe < robot_state::robot_state > ("robot_state/robot_state", 10, &AutonomousControllerCls::robotStateCallback, this);
 	robot_state_change_request_pub_ = nh_.advertise < robot_state::robot_state> ("robot_state/robot_state_change_request", 1, false);
+	image_sub_ = nh_.subscribe("/stereo/top_view", 1, &AutonomousControllerCls::topViewImageCallback, this);		
+}
+
+void AutonomousControllerCls::topViewImageCallback(
+	const sensor_msgs::Image::ConstPtr& image_msg)
+{
+	ROS_INFO("Image received.");		
+	//cv_bridge::CvImageConstPtr cv_ptr_disp = cv_bridge::toCvShare(image_msg->image, image_msg, sensor_msgs::image_encodings::TYPE_32FC1);
+	cv_bridge::CvImageConstPtr cv_ptr_disp = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
+	const cv::Mat image = cv_ptr_disp->image;	
+	ROS_INFO("Image converted.");	
+	ROS_INFO("Image size %dx%d", image.cols, image.rows);
+	vector<int> compression_params;
+	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(75);
+	//cv::Mat rgb_image;
+	//cvtColor(image, rgb_image, CV_GRAY2BGR );
+	//ROS_INFO("Disparity image color converted.");	
+	//cv::imwrite("/tmp/disp.jpg", rgb_image);
+	//cv::imwrite("/tmp/disp.jpg", image);
+	vector<uchar> buff;	
+	cv::imencode(".jpg", image, buff, compression_params);
+	ROS_INFO("Image encoded.");		
+	
+	ROS_INFO("Image sent.");
+	// Release images using deallocate (not release) otherwise memory leakge happens after imread
+	//image.deallocate();
+	ROS_INFO("Image deallocated.");
 }
 
 void AutonomousControllerCls::heartBeatStopCallback(const std_msgs::Bool::ConstPtr& stop)
 {
-	if (robot_state != robot_state::robot_state_constants::RobotState_Stop)
+	/*if (robot_state != robot_state::robot_state_constants::RobotState_Stop)
 	{
 		if (stop->data == true)
 		{
@@ -109,7 +148,7 @@ void AutonomousControllerCls::heartBeatStopCallback(const std_msgs::Bool::ConstP
 		{
 			ROS_WARN("No heart beat message received but value is false???.");
 		}
-	}
+	}*/
 }
 void AutonomousControllerCls::robotStateCallback(const robot_state::robot_state::ConstPtr& state)
 {
@@ -120,6 +159,10 @@ void AutonomousControllerCls::robotStateCallback(const robot_state::robot_state:
 void AutonomousControllerCls::ChangeState(int new_state)
 {
 	robot_state = new_state;
+	if (robot_state == robot_state::robot_state_constants::RobotState_Autonomous)
+	{
+		counter = 0;
+	}
 }
 
 void AutonomousControllerCls::joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag)
@@ -140,78 +183,51 @@ void AutonomousControllerCls::joyDiagCallback(const diagnostic_msgs::DiagnosticA
 
 void AutonomousControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-	//ROS_INFO("Joy callback OK: %d, Buttons: %d,%d,%d,%d", joy_ok, joy->buttons[0],
-	//						joy->buttons[1], joy->buttons[2], joy->buttons[3], joy->buttons[4]);
-	if (!joy_ok)
-	{
+	
+}
 
-	}
-	else
-	{
+void AutonomousControllerCls::Run() 
+{
+	ros::Rate loop_rate(rate);
+	while (ros::ok())
+	{			
+		//ROS_INFO("State: %d", robot_state);
 		if (robot_state == robot_state::robot_state_constants::RobotState_Autonomous)
 		{
-			if (joy->buttons[JoyIgnitionResetButton])
+			counter++;
+			if (counter > stop_counter_seconds * rate)
 			{
-				force_next_ignition_ = true;
+				robot_state::robot_state stop_message;
+				stop_message.state = robot_state::robot_state_constants::RobotState_Stop;
+				robot_state_change_request_pub_.publish(stop_message);
 			}
-			else
-			{
-				if (joy->buttons[JoyIgnitionButton])
-				{
-					ROS_INFO("Ignition button");
-					if (force_next_ignition_)
-					{
-						force_next_ignition_ = false;
-						motor_controller::ignition_control ignition_message;
-						ignition_message.initiate_ignition = 1;
-						ignition_message.force = 1;
-						ignition_control_pub_.publish(ignition_message);
-					}
-					else
-					{
-						motor_controller::ignition_control ignition_message;
-						ignition_message.initiate_ignition = 1;
-						ignition_message.force = 0;
-						ignition_control_pub_.publish(ignition_message);
-					}
-				}
-				else
-				{
-					if (joy_ok)
-					{
-						float steering = joy->axes[JoyRotationAxis];
-						float steering_degree = steering * MaximumSteeringAngle;
-						float head = joy->axes[JoyHeadRotationAxis];						
-						float head_degree = steering * MaximumHeadAngle; // head * MaximumHeadAngle;
+			float steering = 0;
+			float steering_degree = steering * MaximumSteeringAngle;
+			float head = 0;						
+			float head_degree = head * MaximumHeadAngle;
 
-						float positive_speed = joy->axes[JoyLinearAxisPositive];
-						// Map from [1,-1] to [0,1]
-						positive_speed = (1 - positive_speed) / 2.0f;
-						float negative_speed = joy->axes[JoyLinearAxisNegative];
-						// Map from [1,-1] to [0,1]
-						negative_speed = (1 - negative_speed) / 2.0f;
-						float speed = positive_speed - negative_speed;
-						float speed_mps = speed * MaximumForwardSpeed;
+			float speed = 0.3f;
+			float speed_mps = speed * MaximumForwardSpeed;
 
-						motor_controller::speed_steering speed_steering_message;
+			motor_controller::speed_steering speed_steering_message;
 
-						speed_steering_message.speed_mps.speed_mps = speed_mps;
-						speed_steering_message.steering_degree.degree = steering_degree;
-						speed_steering_message.head_degree.degree = head_degree;
+			speed_steering_message.speed_mps.speed_mps = speed_mps;
+			speed_steering_message.steering_degree.degree = steering_degree;
+			speed_steering_message.head_degree.degree = head_degree;
 
-						speed_steering_pub_.publish(speed_steering_message);
-						ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, speed_mps, steering_degree, head_degree);
-					}
-				}
-			}
-		}
+			speed_steering_pub_.publish(speed_steering_message);
+			ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, speed_mps, steering_degree, head_degree);
+		}		
+		loop_rate.sleep();
+		ros::spinOnce();
 	}
 }
 
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "AutonomousController");
+	ROS_INFO("Autonomous Controller");
 	AutonomousControllerCls autonomous_controller;
-	ros::spin();
+	autonomous_controller.Run();			
 }
 

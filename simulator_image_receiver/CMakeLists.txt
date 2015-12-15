@@ -4,13 +4,14 @@ project(simulator_image_receiver)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(OpenCV 2.3.3 REQUIRED)
+#find_package(OpenCV 2.3.3 REQUIRED)
+find_package(OpenCV)
 find_package(catkin REQUIRED COMPONENTS
   camera_info_manager
   image_proc
   image_transport
   motor_controller
-  opencv_candidate
+  #opencv_candidate
   roscpp
   sensor_msgs
   std_msgs
@@ -124,6 +125,8 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 
 ## Declare a C++ library
 # add_library(simulator_image_receiver
@@ -145,7 +148,7 @@ add_dependencies(simulator_image_receiver_node ${${PROJECT_NAME}_gencpp} ${${PRO
 ## Specify libraries to link a library or executable target against
 target_link_libraries(simulator_image_receiver_node
   ${catkin_LIBRARIES}  
-  ${opencv_candidate_LIBRARIES}
+  #${opencv_candidate_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 

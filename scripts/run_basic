@@ -1,0 +1,21 @@
+#echo ***** Running Camera initialization ***** 
+#guvcview -v --no_display -m 2 --exit_on_close
+
+cd ~/catkin_ws
+echo ***** Running Joystick ***** 
+rosrun joy joy_node &
+echo ***** Running Speech Engine ***** 
+rosrun speech_engine speech_engine_node &
+echo ***** Running Robot State ***** 
+rosrun robot_state robot_state_node &
+echo ***** Running Servo Controller ***** 
+rosrun servo_controller servo_controller_node &
+echo ***** Running Motor Controller ***** 
+rosrun motor_controller motor_controller_node &
+echo ***** Running Remote Controller ***** 
+rosrun remote_controller remote_controller_node &
+echo ***** Running Autonomous Controller ***** 
+rosrun autonomous_controller autonomous_controller_node &
+
+#echo ***** Obstacle Detector ***** 
+#rosrun obstable_detector obstable_detector_node 

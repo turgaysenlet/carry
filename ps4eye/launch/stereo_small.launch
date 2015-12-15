@@ -27,7 +27,7 @@
        transport on /webcam/image_raw -->
   <arg name="load_driver" default="true" />
   <arg name="DEVICE" default="/dev/video0"/>
-  <arg name="QUEUE" default="4"/>
+  <arg name="QUEUE" default="2"/>
 
   <!-- The GStreamer framerate needs to be an integral fraction -->
   <arg name="FPS" default="30/1"/>
@@ -56,7 +56,7 @@
     <param name="camera_name" value="right"/>
     <!-- remap output to right image -->
     <remap from="camera_out/image_raw" to="/stereo/right/image_raw" />
-    <!-- Dont use original camera info -->
+    <!-- Dont use origi4nal camera info -->
     <remap from="/stereo/right/camera_info" to="/null/right/camera_info" />
   </node>
   <node pkg="nodelet" type="nodelet" name="split_left" args="load image_proc/crop_decimate $(arg manager)">
