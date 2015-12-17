@@ -1,0 +1,1 @@
+roslaunch ~/catkin_ws/src/carry/launch/record.launch 

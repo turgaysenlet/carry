@@ -1,0 +1,12 @@
+<launch> 
+  <node pkg="rosbag" type="record" name="record" output="screen" args="
+   /stereo/disparity
+   /stereo/right/image_rect_color/compressed
+   /stereo/left/image_rect_color/compressed
+   /stereo/left/camera_info
+   /stereo/right/camera_info
+   /fix
+   /vel
+   -o /home/odroid/Bag/Bag">
+  </node> 
+</launch> 

@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<stetic-interface>
+  <configuration>
+    <images-root-path>..</images-root-path>
+    <target-gtk-version>2.12</target-gtk-version>
+  </configuration>
+  <import>
+    <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <widget-library name="MonoDevelop.Deployment.Linux, Version=2.6.0.0, Culture=neutral" />
+    <widget-library name="MonoDevelop.Ide, Version=2.6.0.0, Culture=neutral" />
+    <widget-library name="../bin/Debug/Car.exe" internal="true" />
+  </import>
+  <widget class="Gtk.Window" id="MainWindow" design-size="971 924">
+    <property name="MemberName" />
+    <property name="Title" translatable="yes">MainWindow</property>
+    <property name="WindowPosition">CenterOnParent</property>
+    <property name="BorderWidth">6</property>
+    <signal name="DeleteEvent" handler="OnDeleteEvent" />
+    <child>
+      <widget class="Gtk.Table" id="table1">
+        <property name="MemberName" />
+        <property name="NRows">3</property>
+        <property name="NColumns">3</property>
+        <property name="RowSpacing">6</property>
+        <property name="ColumnSpacing">6</property>
+        <child>
+          <widget class="Gtk.Button" id="buttonCloseAll">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:stock_dialog-warning Dialog</property>
+            <property name="Label" translatable="yes">Close All</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="TopAttach">1</property>
+            <property name="BottomAttach">2</property>
+            <property name="LeftAttach">2</property>
+            <property name="RightAttach">3</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonExit">
+            <property name="MemberName" />
+            <property name="WidthRequest">653</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:stock_delete Dialog</property>
+            <property name="Label" translatable="yes">Exit</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="TopAttach">2</property>
+            <property name="BottomAttach">3</property>
+            <property name="LeftAttach">1</property>
+            <property name="RightAttach">3</property>
+            <property name="AutoSize">False</property>
+            <property name="YOptions">Expand</property>
+            <property name="XExpand">True</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">True</property>
+            <property name="YFill">False</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ToggleButton" id="buttonGps">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:stock_internet Dialog</property>
+            <property name="Label" translatable="yes">GPS</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="TopAttach">2</property>
+            <property name="BottomAttach">3</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ToggleButton" id="buttonImage">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:stock_zoom-page Dialog</property>
+            <property name="Label" translatable="yes">Show Image</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="LeftAttach">2</property>
+            <property name="RightAttach">3</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ToggleButton" id="buttonRecord">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:stock_media-rec Dialog</property>
+            <property name="Label" translatable="yes">Record</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="TopAttach">1</property>
+            <property name="BottomAttach">2</property>
+            <property name="LeftAttach">1</property>
+            <property name="RightAttach">2</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ToggleButton" id="buttonRoscore">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:gtk-dialog-authentication Dialog</property>
+            <property name="Label" translatable="yes">Roscore</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ToggleButton" id="buttonUsb">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:gtk-missing-image Dialog</property>
+            <property name="Label" translatable="yes">USB Camera</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="LeftAttach">1</property>
+            <property name="RightAttach">2</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonUvc">
+            <property name="MemberName" />
+            <property name="WidthRequest">300</property>
+            <property name="HeightRequest">300</property>
+            <property name="CanFocus">True</property>
+            <property name="Type">TextAndIcon</property>
+            <property name="Icon">stock:gtk-select-color Dialog</property>
+            <property name="Label" translatable="yes">Set Camera Parameters</property>
+            <property name="UseUnderline">True</property>
+          </widget>
+          <packing>
+            <property name="TopAttach">1</property>
+            <property name="BottomAttach">2</property>
+            <property name="AutoSize">True</property>
+            <property name="XOptions">Fill</property>
+            <property name="YOptions">Fill</property>
+            <property name="XExpand">False</property>
+            <property name="XFill">True</property>
+            <property name="XShrink">False</property>
+            <property name="YExpand">False</property>
+            <property name="YFill">True</property>
+            <property name="YShrink">False</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+  </widget>
+</stetic-interface>

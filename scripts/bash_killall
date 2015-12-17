@@ -1,0 +1,3 @@
+#!/bin/bash
+source ~/catkin_ws/devel/setup.sh
+/opt/ros/jade/bin/rosnode kill --all
