@@ -1,0 +1,30 @@
+<launch> 
+  <group ns="cam0">
+	  <node pkg="uvc_camera" type="uvc_camera_node" name="cam0" output="screen" args="">
+	  	<param name="device" type="string" value="/dev/video0" />
+	  </node>
+	  <node pkg="image_view" type="image_view" name="im0" output="screen" args="image:=image_raw">
+	  </node>
+  </group>
+  <group ns="cam1">
+	  <node pkg="uvc_camera" type="uvc_camera_node" name="cam1" output="screen" args="">
+	  	<param name="device" type="string" value="/dev/video1" />
+	  </node>
+	  <node pkg="image_view" type="image_view" name="im1" output="screen" args="image:=image_raw">
+	  </node>
+  </group>
+  <group ns="cam2">
+	  <node pkg="uvc_camera" type="uvc_camera_node" name="cam2" output="screen" args="">
+	  	<param name="device" type="string" value="/dev/video2" />
+	  </node>
+	  <node pkg="image_view" type="image_view" name="im2" output="screen" args="image:=image_raw">
+	  </node>
+  </group>
+  <group ns="cam3">
+	  <node pkg="uvc_camera" type="uvc_camera_node" name="cam3" output="screen" args="">
+	  	<param name="device" type="string" value="/dev/video3" />
+	  </node>
+	  <node pkg="image_view" type="image_view" name="im3" output="screen" args="image:=image_raw">
+	  </node>
+  </group>
+</launch> 

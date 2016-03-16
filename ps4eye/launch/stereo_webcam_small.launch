@@ -1,0 +1,49 @@
+<launch>
+
+  <arg name="manager" default="manager" /> <!-- Must be globally qualified -->
+  <arg name="viewer" default="true" /> <!-- Must be globally qualified -->
+  <node pkg="nodelet" type="nodelet" name="camera_process" args="manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet" name="uvc_camera_stereo" args="load uvc_camera/StereoNodelet /camera_process" output="screen">
+    <param name="width" type="int" value="800" />
+    <param name="height" type="int" value="600" />
+    <param name="fps" type="int" value="30" />
+    <param name="pixel_format" type="string" value="MJPG" />
+    <param name="frame" type="string" value="stereo" />
+
+    <!-- other supported params: auto_exposure, exposure_absolute, brightness, power_line_frequency -->
+
+    <param name="left/device" type="string" value="/dev/video0" />
+    <param name="right/device" type="string" value="/dev/video1" />
+
+    <param name="left/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_left_small.yaml" />
+    <param name="right/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_right_small.yaml" />
+    
+    <remap from="/left/image_raw" to="/stereo/left/image_raw" />
+    <remap from="/right/image_raw" to="/stereo/right/image_raw" />
+    <remap from="/left/camera_info" to="/stereo/left/camera_info" />
+    <remap from="/right/camera_info" to="/stereo/right/camera_info" />
+  </node>
+
+  <group ns="stereo">
+    <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen">
+      <param name="stereo_algorithm"      value="0"/>
+      <param name="approximate_sync"      value="false"/>
+      <param name="correlation_window_size" value="23"/>
+      <param name="disparity_range"         value="128"/>
+      <param name="min_disparity"       value="-128"/>
+      <param name="prefilter_cap"       value="20"/>
+      <param name="prefilter_size"      value="5"/>
+      <param name="queue_size"            value="3"/>
+      <param name="speckle_range"       value="6"/>
+      <param name="speckle_size"        value="150"/>
+      <param name="texture_threshold"     value="50"/>
+      <param name="uniqueness_ratio"      value="15.0"/>  
+      <param name="P1"                  value="720"/>
+      <param name="P2"                  value="520.0"/>        
+    </node>
+  </group>
+
+  <!-- start viewer -->
+  <node name="stereo_view" pkg="image_view" type="stereo_view" args="stereo:=/stereo image:=image_rect_color" if="$(arg viewer)"/>
+</launch>
