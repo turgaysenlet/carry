@@ -36,7 +36,7 @@
       <param name="queue_size"            value="3"/>
       <param name="speckle_range"       value="4"/>
       <param name="speckle_size"        value="100"/>
-      <param name="texture_threshold"     value="40"/>
+      <param name="texture_threshold"     value="50"/>
       <param name="uniqueness_ratio"      value="10.0"/>  
       <param name="P1"                  value="10"/>
       <param name="P2"                  value="20.0"/>        
