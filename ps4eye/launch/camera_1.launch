@@ -1,9 +1,9 @@
 <launch>  
-  <group ns="cam1">
+  	<group ns="cam1">
 	  <node pkg="uvc_camera" type="uvc_camera_node" name="cam1" output="screen" args="">
 	  	<param name="device" type="string" value="/dev/video1" />
 	  </node>
 	  <node pkg="image_view" type="image_view" name="im1" output="screen" args="image:=image_raw">
 	  </node>
-  </group>
+  	</group>
 </launch> 

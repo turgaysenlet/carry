@@ -1,3 +1,0 @@
-<launch>
-<node name="camera_calibrator" pkg="camera_calibration" type="cameracalibrator.py" args="--size 8x6 --square 0.237 --no-service-check right:=/cam2/image_raw left:=/cam3/image_raw right_camera:=/cam2 left_camera:=/cam3" />
-</launch>
