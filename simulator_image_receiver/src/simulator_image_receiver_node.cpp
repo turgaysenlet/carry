@@ -39,6 +39,10 @@ using namespace ros::console::levels;
 namespace enc = sensor_msgs::image_encodings;
 
 bool ProcessStereo = false;
+const int LEFT_RECEIVE_PORT = 2000;
+const int RIGHT_RECEIVE_PORT = 2001;
+const int COMMAND_SEND_PORT = 3000;
+const char* COMMAND_SEND_IP = "192.168.1.70";
 
 class SimulatorImageReceiverCls
 {
@@ -186,7 +190,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 	fcntl(sock_left, F_SETFL, O_NONBLOCK); 
 
 	server_addr_left.sin_family = AF_INET;
-	server_addr_left.sin_port = htons(2000);
+	server_addr_left.sin_port = htons(LEFT_RECEIVE_PORT);
 	server_addr_left.sin_addr.s_addr = INADDR_ANY;
 	bzero(&(server_addr_left.sin_zero),8);
 
@@ -205,7 +209,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 	fcntl(sock_right, F_SETFL, O_NONBLOCK); 
 	
 	server_addr_right.sin_family = AF_INET;
-	server_addr_right.sin_port = htons(2001);
+	server_addr_right.sin_port = htons(RIGHT_RECEIVE_PORT);
 	server_addr_right.sin_addr.s_addr = INADDR_ANY;
 	bzero(&(server_addr_right.sin_zero),8);
 
@@ -222,9 +226,9 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		exit(1);
 	}
 	hostent *host;
-	host = (hostent *) gethostbyname((char *)"192.168.1.70");
+	host = (hostent *) gethostbyname((char *)COMMAND_SEND_IP);
 	client_addr_command.sin_family = AF_INET;
-	client_addr_command.sin_port = htons(3000);
+	client_addr_command.sin_port = htons(COMMAND_SEND_PORT);
 	client_addr_command.sin_addr = *((in_addr *)host->h_addr);
 	bzero(&(client_addr_command.sin_zero),8);
 
@@ -263,23 +267,23 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
 		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
-			// FILE* fl = fopen("/tmp/left.jpg","wb");
-			// fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
-			// fclose(fl);
+			FILE* fl = fopen("/tmp/left.jpg","wb");
+			fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
+			fclose(fl);
 
-			// FILE* fr = fopen("/tmp/right.jpg","wb");
-			// fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
-			// fclose(fr);
+			FILE* fr = fopen("/tmp/right.jpg","wb");
+			fwrite(recv_data_right, sizeof(char), bytes_read_right, fr);
+			fclose(fr);
 
-			// image_left = cv::imread("/tmp/left.jpg", 1);
-			// image_right = cv::imread("/tmp/right.jpg", 1);			
+			image_left = cv::imread("/tmp/left.jpg", 1);
+			image_right = cv::imread("/tmp/right.jpg", 1);
+			/*
 			std::vector<char> data_left(recv_data_left, recv_data_left + bytes_read_left);
 			std::vector<char> data_right(recv_data_right, recv_data_right + bytes_read_right);
 			image_left = cv::imdecode(data_left, -1);
-			image_right = cv::imdecode(data_right, -1);
-			cv::imwrite("/tmp/left.jpg", image_left);
+			image_right = cv::imdecode(data_right, -1);*/
+			//cv::imwrite("/tmp/left.jpg", image_left);
 			ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
-
 			frame_counter++;
 			if (frame_counter_left != frame_counter_right)
 			{
@@ -316,13 +320,13 @@ void SimulatorImageReceiverCls::ReceiveImages()
 				ROS_INFO("New image resolution: %dx%d", Width, Height);
 			}
 
-			ROS_INFO("Left");
+			//ROS_INFO("Left");
 			std_msgs::Header header;
 			header.seq = frame_counter;
 			sensor_msgs::Image image_message_left;
 			cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
 			cvimage_left.toImageMsg(image_message_left);
-			ROS_INFO("Right");
+			//ROS_INFO("Right");
 			sensor_msgs::Image image_message_right;
 			cv_bridge::CvImage cvimage_right(header, enc::BGR8, image_right);
 			cvimage_right.toImageMsg(image_message_right);
@@ -352,8 +356,12 @@ void SimulatorImageReceiverCls::ReceiveImages()
 			}
 
 			// Release images using deallocate (not release) otherwise memory leakge happens after imread
-			//image_left.deallocate();
-			//image_right.deallocate();
+			image_left.deallocate();
+			image_right.deallocate();
+		}
+		else
+		{
+			ROS_WARN("Image bytes don't match skipping. Left: %d, Right: %d", bytes_read_left, bytes_read_right);
 		}
 		
 		float send_data[2] = {desired_speed, desired_steering};
