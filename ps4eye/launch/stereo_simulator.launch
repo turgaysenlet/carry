@@ -1,48 +1,20 @@
-<!-- Launch in the camera namespace containing "image_raw" and "camera_info" -->
 <launch>
-
-  <arg name="manager" /> <!-- Must be globally qualified -->
-  <arg name="respawn" default="false" />
-  <arg name="left" default="left" />
-  <arg name="right" default="right" />
-  <!-- TODO Arguments for sync policy, etc? -->
-
-  <arg     if="$(arg respawn)" name="bond" value="" />
-  <arg unless="$(arg respawn)" name="bond" value="--no-bond" />
-
-  <!-- Basic processing for left camera -->
-  <include file="$(find image_proc)/launch/image_proc.launch"
-           ns="$(arg left)">
-    <arg name="manager" value="$(arg manager)" />
-    <arg name="respawn" value="$(arg respawn)" />
-  </include>
-
-  <!-- Basic processing for right camera -->
-  <include file="$(find image_proc)/launch/image_proc.launch"
-           ns="$(arg right)">
-    <arg name="manager" value="$(arg manager)" />
-    <arg name="respawn" value="$(arg respawn)" />
-  </include>
-
-  <!-- Disparity image -->
-  <node pkg="nodelet" type="nodelet" name="disparity"
-        args="load stereo_image_proc/disparity $(arg manager) $(arg bond)"
-        respawn="$(arg respawn)" >
-		<param name="approximate_sync"			value="false"/>
-		<param name="correlation_window_size"	value="11"/>
-		<param name="disparity_range"       	value="64"/>
-		<param name="min_disparity" 			value="1"/>
-		<param name="prefilter_cap" 			value="1"/>
-		<param name="prefilter_size" 			value="9"/>
-		<param name="queue_size"       			value="3"/>
-		<param name="speckle_range" 			value="4"/>
-		<param name="speckle_size" 				value="100"/>
-		<param name="texture_threshold" 		value="40"/>
-		<param name="uniqueness_ratio" 			value="10.0"/> 	
+  <!--env name="ROS_NAMESPACE" value="stereo"/-->
+  <group ns="stereo" >
+  <node name="stereo_image_proc"
+      pkg="stereo_image_proc" type="stereo_image_proc" output="screen"
+      clear_params="true">
+    <param name="approximate_sync"      value="false"/>
+    <param name="correlation_window_size" value="11"/>
+    <param name="disparity_range"         value="64"/>
+    <param name="min_disparity"       value="1"/>
+    <param name="prefilter_cap"       value="1"/>
+    <param name="prefilter_size"      value="9"/>
+    <param name="queue_size"            value="3"/>
+    <param name="speckle_range"       value="4"/>
+    <param name="speckle_size"        value="100"/>
+    <param name="texture_threshold"     value="40"/>
+    <param name="uniqueness_ratio"      value="10.0"/>        
   </node>
-
-  <!-- PointCloud2 -->
-  <node pkg="nodelet" type="nodelet" name="point_cloud2"
-        args="load stereo_image_proc/point_cloud2 $(arg manager) $(arg bond)"
-        respawn="$(arg respawn)" />
+  </group>
 </launch>
