@@ -1,3 +1,0 @@
-cd ~/catkin_ws/
-clear;
-catkin_make
