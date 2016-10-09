@@ -1,0 +1,6 @@
+rm -R ~/catkin_ws/build
+don;
+cd ~/catkin_ws/
+clear;
+catkin_make -j6 -l6;
+don;

@@ -31,6 +31,8 @@
 using namespace std;
 using namespace ros::console::levels;
 
+const char* HOST_IP = "192.168.1.70";
+const int HOST_PORT = 4000;
 int sock_image_sender;
 sockaddr_in client_addr_image;
 class DepthImageSenderCls
@@ -58,9 +60,9 @@ DepthImageSenderCls::DepthImageSenderCls()// : it_(nh_)
 		exit(1);
 	}
 	hostent *host;
-	host = (hostent *) gethostbyname((char *)"192.168.1.70");
+	host = (hostent *) gethostbyname((char *)HOST_IP);
 	client_addr_image.sin_family = AF_INET;
-	client_addr_image.sin_port = htons(4000);
+	client_addr_image.sin_port = htons(HOST_PORT);
 	client_addr_image.sin_addr = *((in_addr *)host->h_addr);
 	bzero(&(client_addr_image.sin_zero),8);	
 	ROS_INFO("Disparity sender socket created.");	

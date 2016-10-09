@@ -41,8 +41,8 @@ namespace enc = sensor_msgs::image_encodings;
 bool ProcessStereo = false;
 const int LEFT_RECEIVE_PORT = 2000;
 const int RIGHT_RECEIVE_PORT = 2001;
-const int COMMAND_SEND_PORT = 3000;
 const char* COMMAND_SEND_IP = "192.168.1.70";
+const int COMMAND_SEND_PORT = 3000;
 
 class SimulatorImageReceiverCls
 {
@@ -142,7 +142,7 @@ void SimulatorImageReceiverCls::steeringCallback(const motor_controller::steerin
 
 void SimulatorImageReceiverCls::speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering)
 {
-	//ROS_WARN("Received request: %f, %f", speed_steering->speed_mps.speed_mps, speed_steering->steering_degree.degree);
+	ROS_WARN("Received request: %f, %f", speed_steering->speed_mps.speed_mps, speed_steering->steering_degree.degree);
 	SetSpeed(speed_steering->speed_mps.speed_mps);
 	SetSteering(speed_steering->steering_degree.degree);
 }
