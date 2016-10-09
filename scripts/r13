@@ -1,0 +1,2 @@
+echo "rosrun obstable_detector obstable_detector_node"
+rosrun obstable_detector obstable_detector_node
