@@ -1,0 +1,2 @@
+echo "roslaunch ps4eye stereo_simulator.launch"
+roslaunch ps4eye stereo_simulator.launch

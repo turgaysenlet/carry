@@ -1,0 +1,2 @@
+echo "rosrun simulator_image_receiver simulator_image_receiver_node"
+rosrun simulator_image_receiver simulator_image_receiver_node
