@@ -365,6 +365,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		}
 		
 		float send_data[2] = {desired_speed, desired_steering};
+		ROS_WARN("Send speed: %f, sent steer: %f", send_data[0], send_data[1]);		
 		sendto(sock_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
 
 		//update joint_state
