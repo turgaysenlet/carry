@@ -20,6 +20,21 @@ using namespace std;
 using namespace ros::console::levels;
 namespace enc = sensor_msgs::image_encodings;
 
+
+void depthToCV8UC1(const cv::Mat& float_img, cv::Mat& mono8_img){
+	//Process images
+	if(mono8_img.rows != float_img.rows || mono8_img.cols != float_img.cols) {
+		mono8_img = cv::Mat(float_img.size(), CV_8UC1);
+	}
+	cv::convertScaleAbs(float_img, mono8_img, 100, 0.0);
+	//The following doesn't work due to NaNs
+	//double minVal, maxVal; 
+	//minMaxLoc(float_img, &minVal, &maxVal);
+	//ROS_DEBUG("Minimum/Maximum Depth in current image: %f/%f", minVal, maxVal);
+	//mono8_img = cv::Scalar(0);
+	//cv::line( mono8_img, cv::Point2i(10,10),cv::Point2i(200,100), cv::Scalar(255), 3, 8);
+}
+
 class ObstableDetectorCls
 {
 public:
@@ -96,12 +111,18 @@ void ObstableDetectorCls::disparityCallback(
 	
 
 	//cvtColor(disp_image, rgb_image, CV_GRAY2BGR );
+	
 	//ROS_INFO("Disparity image color converted.");		
 	//cv::imwrite("/tmp/disp.jpg", disp_image);
 	std_msgs::Header header;
 	header.stamp = ros::Time::now();
-	cv_bridge::CvImage cv_top_view_ptr(header, enc::TYPE_32FC1, top_view_image);	
+	cv::Mat top_mono_image;
+	//cvtColor(top_view_image, top_rgb_image, CV_GRAY2BGR );
+	depthToCV8UC1(top_view_image, top_mono_image);
+	cv_bridge::CvImage cv_top_view_ptr(header, enc::MONO8, top_mono_image);
+	//top_view_pub_.publish(cv_top_view_ptr.toImageMsg());
 	top_view_pub_.publish(cv_top_view_ptr.toImageMsg());	
+	//cv_bridge::CvImage cv_depth_ptr(header, enc::TYPE_32FC1, depth_image);	
 	cv_bridge::CvImage cv_depth_ptr(header, enc::TYPE_32FC1, depth_image);	
 	depth_pub_.publish(cv_depth_ptr.toImageMsg());
 	//disp_image.deallocate();
