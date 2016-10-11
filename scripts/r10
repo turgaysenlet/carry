@@ -1,2 +1,2 @@
-echo "rosrun servo_controller servo_controller_node"
-rosrun servo_controller servo_controller_node
+echo "rosrun remote_controller remote_controller_node"
+rosrun remote_controller remote_controller_node
