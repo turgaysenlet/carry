@@ -52,6 +52,7 @@ private:
 	void heartBeatStopCallback(const std_msgs::Bool::ConstPtr& stop);
 	void joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag);
 	void ChangeState(int new_state);
+	void Stop();
 	ros::NodeHandle nh_;
 
 	ros::Publisher ignition_control_pub_;
@@ -67,6 +68,17 @@ private:
 	bool joy_ok;
 };
 
+void RemoteControllerCls::Stop() 
+{
+	motor_controller::speed_steering speed_steering_message;
+
+	speed_steering_message.speed_mps.speed_mps = 0;
+	speed_steering_message.steering_degree.degree = 0;
+	speed_steering_message.head_degree.degree = 0;
+
+	speed_steering_pub_.publish(speed_steering_message);
+	ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, 0, 0, 0);
+}
 RemoteControllerCls::RemoteControllerCls()
 {
 	joy_ok = false;
@@ -112,8 +124,9 @@ void RemoteControllerCls::heartBeatStopCallback(const std_msgs::Bool::ConstPtr& 
 	}
 }
 void RemoteControllerCls::robotStateCallback(const robot_state::robot_state::ConstPtr& state)
-{
+{	
 	ChangeState((int)((int)state->state));
+	Stop();
 }
 
 
@@ -144,7 +157,7 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 	//						joy->buttons[1], joy->buttons[2], joy->buttons[3], joy->buttons[4]);
 	if (!joy_ok)
 	{
-
+		Stop();
 	}
 	else
 	{
