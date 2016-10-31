@@ -4,17 +4,22 @@
   <node name="stereo_image_proc"
       pkg="stereo_image_proc" type="stereo_image_proc" output="screen"
       clear_params="true">
-    <param name="approximate_sync"      value="false"/>
-    <param name="correlation_window_size" value="11"/>
-    <param name="disparity_range"         value="64"/>
-    <param name="min_disparity"       value="1"/>
-    <param name="prefilter_cap"       value="1"/>
+    <param name="stereo_algorithm"      value="1"/>
     <param name="prefilter_size"      value="9"/>
-    <param name="queue_size"            value="3"/>
+    <param name="prefilter_cap"       value="1"/>    
+    <param name="approximate_sync"      value="false"/>    
+    <param name="correlation_window_size" value="11"/>
+    <param name="min_disparity"       value="0"/>
+    <param name="disparity_range"         value="64"/>    
+    <param name="uniqueness_ratio"      value="10.0"/>        
+    <param name="texture_threshold"     value="40"/>
     <param name="speckle_range"       value="4"/>
     <param name="speckle_size"        value="100"/>
-    <param name="texture_threshold"     value="40"/>
-    <param name="uniqueness_ratio"      value="10.0"/>        
+    <param name="fullDP"            value="true"/>
+    <param name="queue_size"            value="3"/>
+    <param name="P1"            value="760"/>
+    <param name="P2"            value="2600"/>
+    <param name="diso12MaxDiff"            value="0"/>
   </node>
   </group>
 </launch>

@@ -104,26 +104,34 @@ void AutonomousControllerCls::topViewImageCallback(
 {
 	ROS_INFO("Image received.");		
 	//cv_bridge::CvImageConstPtr cv_ptr_disp = cv_bridge::toCvShare(image_msg->image, image_msg, sensor_msgs::image_encodings::TYPE_32FC1);
-	cv_bridge::CvImageConstPtr cv_ptr_disp = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
-	const cv::Mat image = cv_ptr_disp->image;	
-	ROS_INFO("Image converted.");	
-	ROS_INFO("Image size %dx%d", image.cols, image.rows);
-	vector<int> compression_params;
-	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(75);
-	//cv::Mat rgb_image;
-	//cvtColor(image, rgb_image, CV_GRAY2BGR );
-	//ROS_INFO("Disparity image color converted.");	
-	//cv::imwrite("/tmp/disp.jpg", rgb_image);
-	//cv::imwrite("/tmp/disp.jpg", image);
-	vector<uchar> buff;	
-	cv::imencode(".jpg", image, buff, compression_params);
-	ROS_INFO("Image encoded.");		
-	
-	ROS_INFO("Image sent.");
-	// Release images using deallocate (not release) otherwise memory leakge happens after imread
-	//image.deallocate();
-	ROS_INFO("Image deallocated.");
+	cv_bridge::CvImageConstPtr cv_ptr_top = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::MONO8);
+	const cv::Mat top_view_image = cv_ptr_top->image;	
+
+
+	/*for (int j = 0; j < top_view_image.rows; j++)
+	{		
+		float jj = (j - top_view_image.rows / 2.0f) / (top_view_image.rows / 2.0f);
+		for (int i = 0; i < top_view_image.cols; i++)
+		{
+			if (disp_image.at<float>(j, i) / jj > PLANE_RATIO)
+			{
+				float d = 1.0f / disp_image.at<float>(j, i);
+				depth_image.at<float>(j, i) = d;
+				int y = (int)(d*dk);
+				if (y < 0) y = 0;
+				if (y > top_view_image.cols - 1) y = top_view_image.cols - 1;
+				int x = (int)((depth_image.cols / 2 - i) / xk + top_view_image.cols / 2);
+				if (x < 0) x = 0;
+				if (x > top_view_image.cols - 1) x = top_view_image.cols - 1;
+				
+				top_view_image.at<float>(y, x) += 0.2f;
+			} 
+			else 
+			{
+				depth_image.at<float>(j, i) = 0;
+			}
+		}
+	}*/
 }
 
 void AutonomousControllerCls::heartBeatStopCallback(const std_msgs::Bool::ConstPtr& stop)

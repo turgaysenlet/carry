@@ -267,7 +267,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
 		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
-			FILE* fl = fopen("/tmp/left.jpg","wb");
+			/*FILE* fl = fopen("/tmp/left.jpg","wb");
 			fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
 			fclose(fl);
 
@@ -277,11 +277,11 @@ void SimulatorImageReceiverCls::ReceiveImages()
 
 			image_left = cv::imread("/tmp/left.jpg", 1);
 			image_right = cv::imread("/tmp/right.jpg", 1);
-			/*
+			*/
 			std::vector<char> data_left(recv_data_left, recv_data_left + bytes_read_left);
 			std::vector<char> data_right(recv_data_right, recv_data_right + bytes_read_right);
 			image_left = cv::imdecode(data_left, -1);
-			image_right = cv::imdecode(data_right, -1);*/
+			image_right = cv::imdecode(data_right, -1);
 			//cv::imwrite("/tmp/left.jpg", image_left);
 			ROS_INFO("Image resolution: %dx%d", image_left.cols, image_left.rows);
 			frame_counter++;
@@ -356,8 +356,9 @@ void SimulatorImageReceiverCls::ReceiveImages()
 			}
 
 			// Release images using deallocate (not release) otherwise memory leakge happens after imread
-			image_left.deallocate();
-			image_right.deallocate();
+			// Only use it when needed. Trying to do it when not needed casuses memory leakage too.
+			//image_left.deallocate();
+			//image_right.deallocate();
 		}
 		else
 		{

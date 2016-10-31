@@ -15,11 +15,15 @@
 #include <termios.h> // POSIX terminal control definitions
 #include <time.h>   // time calls
 #include <ros/console.h>
+#include <tf/transform_listener.h>
+#include <costmap_2d/costmap_2d_ros.h>
 
 using namespace std;
 using namespace ros::console::levels;
 namespace enc = sensor_msgs::image_encodings;
 
+const float HEIGHT_CENTER = 0.5f;
+const float PLANE_RATIO = 200.0f;
 
 void depthToCV8UC1(const cv::Mat& float_img, cv::Mat& mono8_img){
 	//Process images
@@ -82,13 +86,13 @@ void ObstableDetectorCls::disparityCallback(
 		float jj = (j - depth_image.rows / 2.0f) / (depth_image.rows / 2.0f);
 		for (int i = 0; i < depth_image.cols; i++)
 		{
-			if (j < depth_image.rows / 1.9f)
+			if (j < depth_image.rows * HEIGHT_CENTER)
 			{
 				depth_image.at<float>(j, i) = 0;
 			}
 			else 
 			{								
-				if (disp_image.at<float>(j, i) / jj > 45)
+				if (disp_image.at<float>(j, i) / jj > PLANE_RATIO)
 				{
 					float d = 1.0f / disp_image.at<float>(j, i);
 					depth_image.at<float>(j, i) = d;
@@ -117,13 +121,15 @@ void ObstableDetectorCls::disparityCallback(
 	std_msgs::Header header;
 	header.stamp = ros::Time::now();
 	cv::Mat top_mono_image;
+	cv::Mat depth_mono_image;
 	//cvtColor(top_view_image, top_rgb_image, CV_GRAY2BGR );
 	depthToCV8UC1(top_view_image, top_mono_image);
 	cv_bridge::CvImage cv_top_view_ptr(header, enc::MONO8, top_mono_image);
 	//top_view_pub_.publish(cv_top_view_ptr.toImageMsg());
 	top_view_pub_.publish(cv_top_view_ptr.toImageMsg());	
 	//cv_bridge::CvImage cv_depth_ptr(header, enc::TYPE_32FC1, depth_image);	
-	cv_bridge::CvImage cv_depth_ptr(header, enc::TYPE_32FC1, depth_image);	
+	depthToCV8UC1(depth_image, depth_mono_image);
+	cv_bridge::CvImage cv_depth_ptr(header, enc::MONO8, depth_mono_image);	
 	depth_pub_.publish(cv_depth_ptr.toImageMsg());
 	//disp_image.deallocate();
 	//ROS_INFO("Depth image published.");
