@@ -47,6 +47,7 @@ private:
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;	
 	image_transport::Publisher top_view_pub_;
+	image_transport::Publisher top_view_rotated_pub_;
 	image_transport::Publisher depth_pub_;
 	ros::Subscriber disp_image_sub_;
 	void disparityCallback(const stereo_msgs::DisparityImage::ConstPtr& disp_image_msg);
@@ -59,6 +60,7 @@ ObstableDetectorCls::ObstableDetectorCls() : it_(nh_)
 {
 	disp_image_sub_ = nh_.subscribe("/stereo/disparity", 1, &ObstableDetectorCls::disparityCallback, this);	
 	top_view_pub_ = it_.advertise("stereo/top_view", 1);
+	top_view_rotated_pub_ = it_.advertise("stereo/top_view_rotated", 1);
 	depth_pub_ = it_.advertise("stereo/depth", 1);
 }
 
@@ -120,6 +122,7 @@ void ObstableDetectorCls::disparityCallback(
 	//cv::imwrite("/tmp/disp.jpg", disp_image);
 	std_msgs::Header header;
 	header.stamp = ros::Time::now();
+	//Top view image
 	cv::Mat top_mono_image;
 	cv::Mat depth_mono_image;
 	//cvtColor(top_view_image, top_rgb_image, CV_GRAY2BGR );
@@ -127,6 +130,13 @@ void ObstableDetectorCls::disparityCallback(
 	cv_bridge::CvImage cv_top_view_ptr(header, enc::MONO8, top_mono_image);
 	//top_view_pub_.publish(cv_top_view_ptr.toImageMsg());
 	top_view_pub_.publish(cv_top_view_ptr.toImageMsg());	
+
+	//Rotated top view image
+	cv::Mat top_view_rotated_mono_image;	
+	cv::flip(top_mono_image, top_view_rotated_mono_image, 1);
+	cv_bridge::CvImage cv_top_view_rotated_ptr(header, enc::MONO8, top_view_rotated_mono_image);
+	top_view_rotated_pub_.publish(cv_top_view_rotated_ptr.toImageMsg());	
+
 	//cv_bridge::CvImage cv_depth_ptr(header, enc::TYPE_32FC1, depth_image);	
 	depthToCV8UC1(depth_image, depth_mono_image);
 	cv_bridge::CvImage cv_depth_ptr(header, enc::MONO8, depth_mono_image);	

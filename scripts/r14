@@ -1,0 +1,3 @@
+clear
+echo face_detection
+roslaunch face_detection face_detection.launch
