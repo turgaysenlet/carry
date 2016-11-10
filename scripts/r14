@@ -1,3 +1,3 @@
 clear
-echo face_detection
-roslaunch face_detection face_detection.launch
+echo face_tracking
+roslaunch face_detection face_tracking.launch

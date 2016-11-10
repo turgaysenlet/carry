@@ -35,7 +35,7 @@ private:
 
 ImagePublisherCls::ImagePublisherCls() : it_(nh_)
 {
-	image_pub_ = it_.advertise("image_raw", 1);
+	image_pub_ = it_.advertise("/usb_cam/image_raw", 1);
 }
 
 void ImagePublisherCls::PublishImage()
