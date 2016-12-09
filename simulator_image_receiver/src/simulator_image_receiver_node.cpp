@@ -41,7 +41,8 @@ namespace enc = sensor_msgs::image_encodings;
 bool ProcessStereo = false;
 const int LEFT_RECEIVE_PORT = 2000;
 const int RIGHT_RECEIVE_PORT = 2001;
-const char* COMMAND_SEND_IP = "192.168.1.70";
+const char* COMMAND_SEND_IP = "10.0.0.108";
+//const char* COMMAND_SEND_IP = "192.168.1.70";
 const int COMMAND_SEND_PORT = 3000;
 
 class SimulatorImageReceiverCls

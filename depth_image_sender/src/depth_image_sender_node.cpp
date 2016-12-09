@@ -31,7 +31,8 @@
 using namespace std;
 using namespace ros::console::levels;
 
-const char* HOST_IP = "192.168.1.70";
+const char* HOST_IP = "10.0.0.108";
+//const char* HOST_IP = "192.168.1.70";
 const int HOST_PORT = 4000;
 int sock_image_sender;
 sockaddr_in client_addr_image;
