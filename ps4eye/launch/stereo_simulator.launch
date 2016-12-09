@@ -9,7 +9,7 @@
     <param name="prefilter_cap"       value="1"/>    
     <param name="approximate_sync"      value="false"/>    
     <param name="correlation_window_size" value="11"/>
-    <param name="min_disparity"       value="0"/>
+    <param name="min_disparity"       value="-1"/>
     <param name="disparity_range"         value="64"/>    
     <param name="uniqueness_ratio"      value="10.0"/>        
     <param name="texture_threshold"     value="40"/>
