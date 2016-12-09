@@ -15,7 +15,7 @@
     <param name="texture_threshold"     value="40"/>
     <param name="speckle_range"       value="4"/>
     <param name="speckle_size"        value="100"/>
-    <param name="fullDP"            value="true"/>
+    <param name="fullDP"            value="false"/>
     <param name="queue_size"            value="3"/>
     <param name="P1"            value="760"/>
     <param name="P2"            value="2600"/>
