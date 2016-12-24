@@ -56,16 +56,28 @@ private:
 bool right_image_received = false;
 void StereoCameraCalibratorCls::imageCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg)
 {
+	ROS_INFO("Image received.");
 	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(left_image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
 	const cv::Mat left_image = cv_ptr->image;
-	if (!right_image_received) {
-		right_image = left_image;
+	if (right_image_received) {
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
+		cv::Mat image = right_image/2 + left_image/2;
+		for (int j = 0; j < image.rows; j+=5)
+		{		
+			for (int i = 0; i < image.cols; i++)
+			{
+				int kk = 3;
+				cv::Point3_<uchar>* p = image.ptr<cv::Point3_<uchar> >(j,i);
+				p->x = p->x/kk;
+				p->y = p->y/kk;
+				p->z = p->z/kk;
+			}
+		}
+
+		cv_bridge::CvImage cv_image_ptr(header, enc::RGB8, image);
+		image_pub_.publish(cv_image_ptr.toImageMsg());
 	}
-	std_msgs::Header header;
-	header.stamp = ros::Time::now();
-	const cv::Mat image = right_image/2 = left_image/2;
-	cv_bridge::CvImage cv_image_ptr(header, enc::BGR8, image);
-	image_pub_.publish(cv_image_ptr.toImageMsg());
 }
 
 void StereoCameraCalibratorCls::imageCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg)
