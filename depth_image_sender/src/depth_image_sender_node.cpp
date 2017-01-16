@@ -86,7 +86,8 @@ void DepthImageSenderCls::disparityCallback(
 	//cvtColor(disp_image, rgb_image, CV_GRAY2BGR );
 	//ROS_INFO("Disparity image color converted.");	
 	//cv::imwrite("/tmp/disp.jpg", rgb_image);
-	//cv::imwrite("/tmp/disp.jpg", disp_image);
+	cv::imwrite("/tmp/disp.jpg", disp_image);
+	
 	vector<uchar> buff;	
 	cv::imencode(".jpg", disp_image*2, buff, compression_params);
 	ROS_INFO("Disparity image encoded.");		

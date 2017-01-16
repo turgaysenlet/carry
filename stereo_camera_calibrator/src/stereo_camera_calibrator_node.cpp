@@ -66,7 +66,7 @@ void StereoCameraCalibratorCls::imageCallbackLeft(const sensor_msgs::Image::Cons
 
 		for (int j = 0; j < image.rows; j++)
 		{
-			if ((j/5) % 2)
+			if ((j/3) % 2)
 			{
 				for (int i = 0; i < image.cols; i++)
 				{
