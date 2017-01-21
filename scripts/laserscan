@@ -1,0 +1,2 @@
+echo rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/camera/depth/image_raw
+rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/camera/depth/image_raw
