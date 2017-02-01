@@ -1,0 +1,2 @@
+echo export ROS_MASTER_URI=http://turgay:11311 export ROS_IP=orbbec 
+export ROS_MASTER_URI=http://turgay:11311;export ROS_IP=orbbec
