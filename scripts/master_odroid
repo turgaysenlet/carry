@@ -1,2 +1,2 @@
-echo export ROS_MASTER_URI=http://10.0.1.186:11311 export ROS_IP=10.0.1.236 
-export ROS_MASTER_URI=http://10.0.1.186:11311;export ROS_IP=10.0.1.236
+echo export ROS_MASTER_URI=http://odroid:11311 export ROS_IP=`(uname -n)` 
+export ROS_MASTER_URI=http://odroid:11311;export ROS_IP=`(uname -n)`
