@@ -11,8 +11,8 @@
       <param name="focus_absolute" type="int" value="0" />
       <!-- other supported params: auto_exposure, exposure_absolute, brightness, power_line_frequency -->
 
-      <param name="left/device" type="string" value="/dev/video1" />
-      <param name="right/device" type="string" value="/dev/video0" />
+      <param name="left/device" type="string" value="/dev/video0" />
+      <param name="right/device" type="string" value="/dev/video1" />
       <param name="left/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_left_320.yaml" />
       <param name="right/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_right_320.yaml" />
     </node>
