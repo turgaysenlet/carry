@@ -2,4 +2,5 @@
 cd ~/catkin_ws/src/carry
 clear;
 git pull
+copy_scripts
 
