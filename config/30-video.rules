@@ -1,0 +1,2 @@
+SUBSYSTEM=="usb", ATTR{urbnum}=="5767", ATTR{idVendor}=="1415", ATTR{idProduct}=="2000", SYMLINK+="video2"
+SUBSYSTEM=="usb", ATTR{urbnum}=="8308", ATTR{idVendor}=="1415", ATTR{idProduct}=="2000", SYMLINK+="video3"
