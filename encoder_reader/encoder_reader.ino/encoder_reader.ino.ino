@@ -8,6 +8,7 @@ int n = LOW;
 void setup() {
   pinMode(encoder0PinA, INPUT);
   pinMode(encoder0PinB, INPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(9600);
 }
 
@@ -19,8 +20,10 @@ void loop() {
     } else {
       encoder0Pos++;
     }
-    Serial.print(encoder0Pos);
-    Serial.print("/");
+    Serial.println(encoder0Pos);
+    //Serial.print("/");
   }
+  digitalWrite(LED_BUILTIN, n);
   encoder0PinALast = n;
+  //delay(10);
 }
