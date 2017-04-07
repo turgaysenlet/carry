@@ -1,0 +1,1 @@
+rosrun tf static_transform_publisher 0 0 0.08     1.57079632695    3.1415926539   1.57079632695 /camera_link /camera 50

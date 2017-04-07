@@ -43,60 +43,95 @@ public:
 private:
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;
-	ros::Subscriber left_image_sub_;
-	ros::Subscriber right_image_sub_;	
-	image_transport::Publisher image_pub_;	
+	ros::Subscriber left_raw_image_sub_;
+	ros::Subscriber right_raw_image_sub_;	
+	ros::Subscriber left_rect_image_sub_;
+	ros::Subscriber right_rect_image_sub_;		
+	image_transport::Publisher image_raw_pub_;	
+	image_transport::Publisher image_rect_pub_;	
 	int Width;
 	int Height;
-	void imageCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg);
-	void imageCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg);
-    cv::Mat right_image;
+	void imageRawCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg);
+	void imageRawCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg);
+    void imageRectCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg);
+	void imageRectCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg);
+    cv::Mat right_raw_image;
+    cv::Mat right_rect_image;
 };
-
-bool right_image_received = false;
-void StereoCameraCalibratorCls::imageCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg)
+bool right_raw_image_received = false;
+bool right_rect_image_received = false;
+cv::Mat imageFuncLeft(const sensor_msgs::Image::ConstPtr& left_image_msg, const cv::Mat& right_image) 
 {
 	ROS_INFO("Image received.");
 	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(left_image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
 	const cv::Mat left_image = cv_ptr->image;
-	if (right_image_received) {
-		std_msgs::Header header;
-		header.stamp = ros::Time::now();
-		cv::Mat image = right_image/2 + left_image/2;
+	cv::Mat image = right_image/2 + left_image/2;
 
-		for (int j = 0; j < image.rows; j++)
+	for (int j = 0; j < image.rows; j++)
+	{
+		if ((j/3) % 2)
 		{
-			if ((j/3) % 2)
+			for (int i = 0; i < image.cols; i++)
 			{
-				for (int i = 0; i < image.cols; i++)
-				{
-					int kk = 2;
-					cv::Point3_<uchar>* p = image.ptr<cv::Point3_<uchar> >(j,i);
-					p->x = p->x/kk;
-					p->y = p->y/kk;
-					p->z = p->z/kk;
-				}
+				int kk = 2;
+				cv::Point3_<uchar>* p = image.ptr<cv::Point3_<uchar> >(j,i);
+				p->x = p->x/kk;
+				p->y = p->y/kk;
+				p->z = p->z/kk;
 			}
 		}
+	}
+	return image;	
+}
+
+void StereoCameraCalibratorCls::imageRawCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg)
+{
+	if (right_raw_image_received) 
+	{
+		cv::Mat image = imageFuncLeft(left_image_msg, right_raw_image);
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
 		cv_bridge::CvImage cv_image_ptr(header, enc::RGB8, image);
-		image_pub_.publish(cv_image_ptr.toImageMsg());
+		image_raw_pub_.publish(cv_image_ptr.toImageMsg());
 	}
 }
 
-void StereoCameraCalibratorCls::imageCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg)
+void StereoCameraCalibratorCls::imageRectCallbackLeft(const sensor_msgs::Image::ConstPtr& left_image_msg)
+{
+	if (right_rect_image_received) 
+	{
+		cv::Mat image = imageFuncLeft(left_image_msg, right_rect_image);
+		std_msgs::Header header;
+		header.stamp = ros::Time::now();
+		cv_bridge::CvImage cv_image_ptr(header, enc::RGB8, image);
+		image_rect_pub_.publish(cv_image_ptr.toImageMsg());
+	}
+}
+
+void StereoCameraCalibratorCls::imageRawCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg)
 {
 	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(right_image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
-	right_image = cv_ptr->image;
-	right_image_received = true;
+	right_raw_image = cv_ptr->image;
+	right_raw_image_received = true;
+}
+
+void StereoCameraCalibratorCls::imageRectCallbackRight(const sensor_msgs::Image::ConstPtr& right_image_msg)
+{
+	cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvCopy(right_image_msg, sensor_msgs::image_encodings::TYPE_8UC3);
+	right_rect_image = cv_ptr->image;
+	right_rect_image_received = true;
 }
 
 StereoCameraCalibratorCls::StereoCameraCalibratorCls() : it_(nh_)
 {
 	Width = 0;
-	Height = 0;
-	image_pub_ = it_.advertise("/stereo/image_combined", 1);
-	left_image_sub_ = nh_.subscribe("/stereo/left/image_raw", 1, &StereoCameraCalibratorCls::imageCallbackLeft, this);
-	right_image_sub_ = nh_.subscribe("/stereo/right/image_raw", 1, &StereoCameraCalibratorCls::imageCallbackRight, this);
+	Height = 0;	
+	image_raw_pub_ = it_.advertise("/stereo/image_raw_combined", 1);
+	image_rect_pub_ = it_.advertise("/stereo/image_rect_combined", 1);
+	left_raw_image_sub_ = nh_.subscribe("/stereo/left/image_raw", 1, &StereoCameraCalibratorCls::imageRawCallbackLeft, this);
+	right_raw_image_sub_ = nh_.subscribe("/stereo/right/image_raw", 1, &StereoCameraCalibratorCls::imageRawCallbackRight, this);
+	left_rect_image_sub_ = nh_.subscribe("/stereo/left/image_rect_color", 1, &StereoCameraCalibratorCls::imageRectCallbackLeft, this);
+	right_rect_image_sub_ = nh_.subscribe("/stereo/right/image_rect_color", 1, &StereoCameraCalibratorCls::imageRectCallbackRight, this);
 }
 
 int main(int argc, char** argv)
@@ -159,16 +194,16 @@ public:
 private:
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;
-	image_transport::SubscriberFilter left_image_sub_;
-    image_transport::SubscriberFilter right_image_sub_;
+	image_transport::SubscriberFilter left_raw_image_sub_;
+    image_transport::SubscriberFilter right_raw_image_sub_;
 	message_filters::Synchronizer< SyncPolicy > sync_;
 	void imageCallback(
         const sensor_msgs::ImageConstPtr& left_image_msg,
         const sensor_msgs::ImageConstPtr& right_image_msg,
         );
 
-	image_transport::Subscriber< stereo_msgs::Image> left_image_sub_;
-	image_transport::Subscriber< stereo_msgs::Image> right_image_sub_;		
+	image_transport::Subscriber< stereo_msgs::Image> left_raw_image_sub_;
+	image_transport::Subscriber< stereo_msgs::Image> right_raw_image_sub_;		
 
 	int Width;
 	int Height;

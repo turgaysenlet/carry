@@ -1,2 +1,2 @@
-echo export ROS_MASTER_URI=http://turgay:11311 export ROS_IP=`(uname -n)`
+echo export ROS_MASTER_URI=http://turgay:11311 export ROS_IP=`(uname -n)` 
 export ROS_MASTER_URI=http://turgay:11311;export ROS_IP=`(uname -n)`
