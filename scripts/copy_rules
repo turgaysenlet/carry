@@ -1,0 +1,2 @@
+chmod +x ~/catkin_ws/src/carry/config/*
+sudo cp -i -v ~/catkin_ws/src/carry/config/* /etc/udev/rules.d
