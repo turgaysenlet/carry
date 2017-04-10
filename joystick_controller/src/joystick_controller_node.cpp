@@ -90,13 +90,9 @@ void JoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
   //ROS_INFO("positive_speed: %f", positive_speed);
   float negative_speed = joy->axes[JoyLinearAxisNegative];
   // Map from [1,-1] to [0,1]
-  negative_speed = (1 - negative_speed);
-  //ROS_INFO("negative_speed: %f", negative_speed);
-  int speed = MaximumSpeed*(positive_speed - negative_speed);
-  // No reverse for now.
-  if (speed < 0) {
-  	speed = 0;
-  }
+  negative_speed = -negative_speed;
+  ROS_INFO("negative_speed: %f", negative_speed);
+  int speed = MaximumSpeed*(positive_speed - negative_speed);  
   //ROS_INFO("speed: %f", speed);
 
   geometry_msgs::Vector3 motors_message;

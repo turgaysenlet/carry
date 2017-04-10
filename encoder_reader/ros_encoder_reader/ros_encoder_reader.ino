@@ -38,10 +38,26 @@ int motor0 = 0;
 int motor1 = 0;
 
 void motors_cb( const geometry_msgs::Vector3& cmd_msg){
-  motor0 = cmd_msg.x;
-  motor1 = cmd_msg.y;
+  int dir0;
+  int dir1;
+  if (cmd_msg.x > 0) { 
+    dir0 = LOW;
+    motor0 = cmd_msg.x;  
+  } else {
+    dir0 = HIGH;
+    motor0 = -cmd_msg.x;
+  }
+  if (cmd_msg.y > 0) { 
+    dir1 = LOW;
+    motor1 = cmd_msg.y;  
+  } else {
+    dir1 = HIGH;
+    motor1 = -cmd_msg.y;
+  }  
   analogWrite(motor0Pwm, motor0);
   analogWrite(motor1Pwm, motor1);
+  digitalWrite(motor0Dir, dir0);
+  digitalWrite(motor1Dir, dir1);
   counter = 0;
 }
 
