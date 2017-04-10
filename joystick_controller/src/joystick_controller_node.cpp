@@ -2,6 +2,7 @@
 #include <diagnostic_msgs/DiagnosticStatus.h>
 #include <errno.h>  // Error number definitions
 #include <fcntl.h>  // File control definitions
+#include <geometry_msgs/Vector3.h>
 #include <motor_controller/ignition_control.h>
 #include <motor_controller/speed.h>
 #include <motor_controller/speed_steering.h>
@@ -11,7 +12,6 @@
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Vector3.h>
 #include <speech_engine/speech_request.h>
 #include <std_msgs/Bool.h>
 #include <stdio.h>    // standard input / output functions
@@ -23,15 +23,18 @@
 
 using namespace std;
 
-const int JoyLinearAxisPositive = 1; // X
-const int JoyLinearAxisNegative = 3; // Throttle
-const int JoyRotationAxis = 0; // Y
-const float MaximumSteeringAngle = 30.0f;
+const int JoyLinearAxisPositive = 1;  // X
+const int JoyLinearAxisNegative = 3;  // Throttle
+const int JoyRotationAxis = 0;        // Y
+const float MaximumSteeringAngle = 80.0f;
 /// <summary>
-/// Maximum forward travel speed in meters per second.
+/// Maximum forward travel speed where 255 is max motor speed ~4m/s.
 /// </summary>
 const float MaximumSpeed = 100.0f;
-
+/// <summary>
+/// Turning speed where 255 is max motor speed ~4m/s.
+/// </summary>
+const float TurningSpeed = 60.0f;
 class JoystickControllerCls {
  public:
   JoystickControllerCls();
@@ -48,17 +51,15 @@ class JoystickControllerCls {
   ros::Publisher speech_pub_;
 };
 
-void JoystickControllerCls::joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag)
-{
-	if (diag->status.size() > 0)
-	{
-		if (diag->status[0].level != 0)
-		{
-			ROS_WARN("Joystick disconnected");
-			Stop();
-		}
-		//joy_ok = (diag->status[0].level == 0);
-	}
+void JoystickControllerCls::joyDiagCallback(
+    const diagnostic_msgs::DiagnosticArray::ConstPtr& diag) {
+  if (diag->status.size() > 0) {
+    if (diag->status[0].level != 0) {
+      ROS_WARN("Joystick disconnected");
+      Stop();
+    }
+    // joy_ok = (diag->status[0].level == 0);
+  }
 }
 
 void JoystickControllerCls::Stop() {
@@ -71,6 +72,7 @@ void JoystickControllerCls::Stop() {
   motors_pub_.publish(motors_message);
   ROS_INFO("Left: %d, Right %d", 0, 0);
 }
+
 JoystickControllerCls::JoystickControllerCls() {
   speech_pub_ = nh_.advertise<speech_engine::speech_request>(
       "speech_engine/speech_request", 1);
@@ -81,24 +83,26 @@ JoystickControllerCls::JoystickControllerCls() {
   motors_pub_ = nh_.advertise<geometry_msgs::Vector3>("motors", 1);
 }
 
+float DegreeToRadian(float degree) { return degree / 57.295779524f; }
+
 void JoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
   float steering = joy->axes[JoyRotationAxis];
   ROS_INFO("steering: %f", steering);
   float steering_degree = steering * MaximumSteeringAngle;
 
-  float positive_speed = joy->axes[JoyLinearAxisPositive];
-  //ROS_INFO("positive_speed: %f", positive_speed);
+  float positive_speed = 0;//joy->axes[JoyLinearAxisPositive];
+  // ROS_INFO("positive_speed: %f", positive_speed);
   float negative_speed = joy->axes[JoyLinearAxisNegative];
   // Map from [1,-1] to [0,1]
-  negative_speed = -negative_speed;
-  ROS_INFO("negative_speed: %f", negative_speed);
-  int speed = MaximumSpeed*(positive_speed - negative_speed);  
-  //ROS_INFO("speed: %f", speed);
+  negative_speed = -negative_speed;  
+  int speed = MaximumSpeed * (positive_speed - negative_speed);
+  // ROS_INFO("speed: %f", speed);
 
   geometry_msgs::Vector3 motors_message;
 
-  motors_message.x = speed;
-  motors_message.y = speed;
+  float steering_radian = DegreeToRadian(steering_degree);
+  motors_message.x = -sin(steering_radian) * TurningSpeed + speed;
+  motors_message.y = sin(steering_radian) * TurningSpeed + speed;
   motors_message.z = 0;
 
   motors_pub_.publish(motors_message);
