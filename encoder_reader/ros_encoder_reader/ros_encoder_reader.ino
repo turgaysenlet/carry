@@ -27,13 +27,13 @@ volatile unsigned int encoder0Pos = 0;
 volatile unsigned int encoder1Pos = 0;
 
 ros::NodeHandle  nh;
-
 geometry_msgs::TransformStamped t;
 tf::TransformBroadcaster broadcaster;
 
 char base_link[] = "/base_link";
 char odom[] = "/odom";
-int counter = 0;
+unsigned int counter = 0;
+unsigned int global_counter = 0;
 int motor0 = 0;
 int motor1 = 0;
 
@@ -76,8 +76,9 @@ void setup()
 
 void loop()
 { 
-  // If no new motor command given in ~6s, stop motors
-  if (counter > 255) {
+  global_counter++;
+  // If no new motor command given in 5s, stop motors
+  if (counter > 285) {
     analogWrite(motor0Pwm, 0);
     analogWrite(motor1Pwm, 0);    
   } else 
@@ -86,6 +87,7 @@ void loop()
   }
   t.header.frame_id = odom;
   t.child_frame_id = base_link;
+  
   t.transform.translation.x = encoder0Pos;
   t.transform.translation.y = encoder1Pos;
   t.transform.translation.z = counter;
@@ -94,6 +96,7 @@ void loop()
   t.transform.rotation.z = 0.0; 
   t.transform.rotation.w = 1.0;  
   t.header.stamp = nh.now();
+  t.header.seq = global_counter;
   broadcaster.sendTransform(t);
   nh.spinOnce();
   delay(10);
