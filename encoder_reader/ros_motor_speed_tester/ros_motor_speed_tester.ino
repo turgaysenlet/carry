@@ -47,16 +47,22 @@ void setup()
 int last0;
 int last1;
 int last_counter = 0;
-int T = 500;  
+int T = 500;
+int Correct(float y) {
+  return (int)y;
+  if (y < 50) {return (int)y;}
+  if (y < 80) {return (int)((float)y*1.0564033634f-3.9793345641f);}
+  return (int)((float)y*1.0564033634f-3.9793345641f);
+}
 void speedTest(int x, int y, int t) {
   if (global_counter == 1+t-T) {    
     last0 = encoder0Pos;
     last1 = encoder1Pos; 
     last_counter = global_counter; 
-    analogWrite(motor0Pwm, x);
+    analogWrite(motor0Pwm, Correct(x));
     analogWrite(motor1Pwm, y);
   } else if (global_counter == t) {
-    Serial.println("Speed: " + String(x) + "/" +String(y) + ", Time: " + String(global_counter-last_counter+1) + ", " + String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1));    
+    Serial.println("Speed: " + String(x) + "(" + String(Correct(x))+")"+ "/" +String(y) + ", Time: " + String(global_counter-last_counter+1) + ", " + String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1));    
     analogWrite(motor0Pwm, 0);
     analogWrite(motor1Pwm, 0);
   }
