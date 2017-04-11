@@ -23,4 +23,5 @@ Speed: 0/130, Time: 500, 0, 1238
 Speed: 140/0, Time: 500, 1394, 0
 Speed: 0/140, Time: 500, 0, 1353
 
-
+CorrectRightMotorSpeed=RightCommand*1.0564033634-3.9793345641
+E.g. Given RightCommand=100, to match with Left speed, CorrectRightMotorSpeed should be 101.6610017759
