@@ -84,21 +84,30 @@ void setup()
   Serial.println("start");                // a personal quirk
 }
 
+ros::Time now;
+int last0;
+int last1;
 void loop()
 { 
-  int T = 120;
+  int T = 280;
   global_counter++;
-  // If no new motor command given in 5s, stop motors
-  if (global_counter < T*1) {
-    analogWrite(motor0Pwm, 40);
-    analogWrite(motor1Pwm, 40); 
-  } else 
-  {
-    counter++;
+  
+  if (global_counter == 1) {
+    last0 = encoder0Pos;
+    last1 = encoder1Pos;
+    now = nh.now();
+    analogWrite(motor0Pwm, 50);
+    analogWrite(motor1Pwm, 0); 
   }
+  if (global_counter == T) {
+    Serial.println(String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1) + ", " + String(nh.now().toSec()-now.toSec()));
+    last1 = encoder1Pos;    
+    analogWrite(motor0Pwm, 0);
+    analogWrite(motor1Pwm, 0);  
+  }
+
   t.header.frame_id = odom;
   t.child_frame_id = base_link;
-  
   t.transform.translation.x = encoder0Pos;
   t.transform.translation.y = encoder1Pos;
   t.transform.translation.z = counter;
@@ -151,3 +160,4 @@ void doEncoder1() {
     encoder1Pos--;
   }  
 }
+
