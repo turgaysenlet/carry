@@ -1,12 +1,3 @@
-/* 
- * rosserial Time and TF Example
- * Publishes a transform at current time
- */
-
-#include <ros.h>
-#include <ros/time.h>
-#include <tf/transform_broadcaster.h>
-
 // Encoder 0
 #define encoder0PinA  2
 #define encoder0PinB  4
@@ -26,40 +17,9 @@
 volatile unsigned int encoder0Pos = 0;
 volatile unsigned int encoder1Pos = 0;
 
-ros::NodeHandle  nh;
-geometry_msgs::TransformStamped t;
-tf::TransformBroadcaster broadcaster;
-
-char base_link[] = "/base_link";
-char odom[] = "/odom";
-unsigned int counter = 0;
 unsigned int global_counter = 0;
 int motor0 = 0;
 int motor1 = 0;
-
-void motors_cb(int x, int y){
-  int dir0;
-  int dir1;
-  if (x > 0) { 
-    dir0 = LOW;
-    motor0 = x;  
-  } else {
-    dir0 = HIGH;
-    motor0 = -x;
-  }
-  if (y > 0) { 
-    dir1 = LOW;
-    motor1 = y;  
-  } else {
-    dir1 = HIGH;
-    motor1 = -y;
-  }  
-  analogWrite(motor0Pwm, motor0);
-  analogWrite(motor1Pwm, motor1);
-  digitalWrite(motor0Dir, dir0);
-  digitalWrite(motor1Dir, dir1);
-  counter = 0;
-}
 
 void setup()
 {
@@ -84,41 +44,50 @@ void setup()
   Serial.println("start");                // a personal quirk
 }
 
-ros::Time now;
 int last0;
 int last1;
-void loop()
-{ 
-  int T = 280;
-  global_counter++;
-  
-  if (global_counter == 1) {
+int last_counter = 0;
+int T = 500;  
+void speedTest(int x, int y, int t) {
+  if (global_counter == 1+t-T) {    
     last0 = encoder0Pos;
-    last1 = encoder1Pos;
-    now = nh.now();
-    analogWrite(motor0Pwm, 50);
-    analogWrite(motor1Pwm, 0); 
-  }
-  if (global_counter == T) {
-    Serial.println(String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1) + ", " + String(nh.now().toSec()-now.toSec()));
-    last1 = encoder1Pos;    
+    last1 = encoder1Pos; 
+    last_counter = global_counter; 
+    analogWrite(motor0Pwm, x);
+    analogWrite(motor1Pwm, y);
+  } else if (global_counter == t) {
+    Serial.println("Speed: " + String(x) + "/" +String(y) + ", Time: " + String(global_counter-last_counter+1) + ", " + String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1));    
     analogWrite(motor0Pwm, 0);
-    analogWrite(motor1Pwm, 0);  
+    analogWrite(motor1Pwm, 0);
   }
-
-  t.header.frame_id = odom;
-  t.child_frame_id = base_link;
-  t.transform.translation.x = encoder0Pos;
-  t.transform.translation.y = encoder1Pos;
-  t.transform.translation.z = counter;
-  t.transform.rotation.x = motor0;
-  t.transform.rotation.y = motor1; 
-  t.transform.rotation.z = 0.0; 
-  t.transform.rotation.w = 1.0;  
-  t.header.stamp = nh.now();
-  t.header.seq = global_counter;
-  broadcaster.sendTransform(t);
-  nh.spinOnce();
+}
+void loop()
+{   
+  global_counter++;
+  speedTest(50, 0, T);
+  speedTest(0, 50, 2*T);
+  speedTest(55, 0, 3*T);
+  speedTest(0, 55, 4*T);
+  speedTest(58, 0, 5*T);
+  speedTest(0, 58, 6*T);
+  speedTest(60, 0, 7*T);
+  speedTest(0, 60, 8*T);
+  speedTest(70, 0, 9*T);
+  speedTest(0, 70, 10*T);
+  speedTest(80, 0, 11*T);
+  speedTest(0, 80, 12*T);
+  speedTest(90, 0, 13*T);
+  speedTest(0, 90, 14*T);
+  speedTest(100, 0, 15*T);
+  speedTest(0, 100, 16*T);
+  speedTest(110, 0, 17*T);
+  speedTest(0, 110, 18*T);
+  speedTest(120, 0, 19*T);
+  speedTest(0, 120, 20*T);
+  speedTest(130, 0, 21*T);
+  speedTest(0, 130, 22*T);
+  speedTest(140, 0, 23*T);
+  speedTest(0, 140, 24*T);
   delay(10);
 }
 
