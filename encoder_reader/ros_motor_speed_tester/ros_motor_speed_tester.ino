@@ -13,10 +13,20 @@
 // Motor 1
 #define motor1Pwm 11
 #define motor1Dir 12
-
+// Average speed smoothing factor. Larger means instantaneous value will be used more.
+// 1->Only use instantaneous speed.
+// 0->Only use existing average speed (no updates, won't work).
+float speed_alpha = 0.2f;
 volatile unsigned int encoder0Pos = 0;
 volatile unsigned int encoder1Pos = 0;
+unsigned int encoder0PosLast = 0;
+unsigned int encoder1PosLast = 0;
+float speed0 = 0;
+float speed1 = 0;
+float speed0instant = 0;
+float speed1instant = 0;
 
+unsigned int global_counter_last = 0;
 unsigned int global_counter = 0;
 int motor0 = 0;
 int motor1 = 0;
@@ -46,29 +56,40 @@ void setup()
 
 int last0;
 int last1;
-int last_counter = 0;
 int T = 500;
-int Correct(float y) {
-  return (int)y;
-  if (y < 50) {return (int)y;}
-  if (y < 80) {return (int)((float)y*1.0564033634f-3.9793345641f);}
-  return (int)((float)y*1.0564033634f-3.9793345641f);
+int setSpeed0(int desired_speed) {
+  return desired_speed;
 }
 void speedTest(int x, int y, int t) {
   if (global_counter == 1+t-T) {    
     last0 = encoder0Pos;
     last1 = encoder1Pos; 
-    last_counter = global_counter; 
-    analogWrite(motor0Pwm, Correct(x));
+    analogWrite(motor0Pwm, x);
     analogWrite(motor1Pwm, y);
   } else if (global_counter == t) {
-    Serial.println("Speed: " + String(x) + "(" + String(Correct(x))+")"+ "/" +String(y) + ", Time: " + String(global_counter-last_counter+1) + ", " + String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1));    
+    Serial.println("Speed: " + String(x) + ", " + String(y) + ", Time: " + String(global_counter-global_counter_last+1) + ", " + String(encoder0Pos-last0) + ", " + String(encoder1Pos-last1));    
     analogWrite(motor0Pwm, 0);
     analogWrite(motor1Pwm, 0);
   }
 }
-void loop()
-{   
+
+void calculateSpeed() {
+  float dt = global_counter - global_counter_last;
+  if (dt > 0) {
+    speed0instant = (encoder0Pos - encoder0PosLast) / dt;
+    speed0 = speed0 * (1.0f - speed_alpha) + speed0instant * speed_alpha;
+    encoder0PosLast = encoder0Pos;
+    speed1instant = (encoder1Pos - encoder1PosLast) / dt;
+    speed1 = speed1 * (1.0f - speed_alpha) + speed1instant * speed_alpha;
+    encoder1PosLast = encoder1Pos;
+  }
+  if (speed0 > 0 || speed1 > 0) {
+    Serial.println("Dt: " + String(dt) + ", speed0: " + String(speed0) + ", instant: " + String(speed0instant) + ", speed1: " + String(speed1) + ", instant: " + String(speed1instant));
+  }
+  global_counter_last = global_counter;
+}
+
+void loop() {   
   global_counter++;
   speedTest(50, 0, T);
   speedTest(0, 50, 2*T);
@@ -94,7 +115,8 @@ void loop()
   speedTest(0, 130, 22*T);
   speedTest(140, 0, 23*T);
   speedTest(0, 140, 24*T);
-  delay(10);
+  calculateSpeed();
+  delay(1000);
 }
 
 /* read a rotary encoder with interrupts
@@ -119,7 +141,8 @@ void doEncoder0() {
     encoder0Pos++;
   } else {
     encoder0Pos--;
-  }  
+  }
+  
 }
 
 void doEncoder1() {
