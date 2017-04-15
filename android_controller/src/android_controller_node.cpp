@@ -62,7 +62,7 @@ AndroidControllerCls::AndroidControllerCls() {
   speech_pub_ = nh_.advertise<speech_engine::speech_request>(
       "speech_engine/speech_request", 1);
   joy_sub_ = nh_.subscribe<sensor_msgs::Imu>(
-      "imu", 3, &AndroidControllerCls::joyCallback, this);
+      "imu", 1, &AndroidControllerCls::joyCallback, this);
   motors_pub_ = nh_.advertise<geometry_msgs::Vector3>("motors", 1);
 }
 
@@ -73,7 +73,7 @@ void AndroidControllerCls::joyCallback(const sensor_msgs::Imu::ConstPtr& joy) {
   ROS_INFO("steering: %f", steering);
   float steering_degree = steering * MaximumSteeringAngle * 0;
 
-  float positive_speed = (joy->linear_acceleration.y - 7.0f) / 8.0f;
+  float positive_speed = (joy->linear_acceleration.y - 7.0f) / 2.0f;
   // Map from [1,-1] to [0,1]
   int speed = MaximumSpeed * positive_speed;
   ROS_INFO("positive_speed: %f, speed: %d", positive_speed, speed);
