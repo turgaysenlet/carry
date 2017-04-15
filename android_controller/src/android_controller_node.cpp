@@ -69,12 +69,29 @@ AndroidControllerCls::AndroidControllerCls() {
 float DegreeToRadian(float degree) { return degree / 57.295779524f; }
 
 void AndroidControllerCls::joyCallback(const sensor_msgs::Imu::ConstPtr& joy) {
-  float steering = joy->linear_acceleration.x / 5.0f;
-  ROS_INFO("steering: %f", steering);
-  float steering_degree = steering * MaximumSteeringAngle * 0;
-
-  float positive_speed = (joy->linear_acceleration.y - 7.0f) / 2.0f;
-  // Map from [1,-1] to [0,1]
+  float steering = joy->linear_acceleration.x / 3.0f;
+  if (steering > 1.0f) {
+    steering = 1.0f;
+  } else if (steering < -1.0f) {
+    steering = -1.0f;
+  } else if (steering < 0.2f && steering >= 0.0f) {
+    steering = 0.0f;
+  } else if (steering > -0.2f && steering <= 0.0f) {
+    steering = 0.0f;
+  }
+  float steering_degree = steering * MaximumSteeringAngle;
+  ROS_INFO("steering: %f, steering_degree: %f", steering, steering_degree);
+ 
+  float positive_speed = -(joy->linear_acceleration.y - 7.0f) / 3.0f;
+  if (positive_speed > 1.0f) {
+    positive_speed = 1.0f;
+  } else if (positive_speed < -1.0f) {
+    positive_speed = -1.0f;
+  } else if (positive_speed < 0.2f && positive_speed >= 0.0f) {
+    positive_speed = 0.0f;
+  } else if (positive_speed > -0.2f && positive_speed <= 0.0f) {
+    positive_speed = 0.0f;
+  }
   int speed = MaximumSpeed * positive_speed;
   ROS_INFO("positive_speed: %f, speed: %d", positive_speed, speed);
 
@@ -92,5 +109,11 @@ void AndroidControllerCls::joyCallback(const sensor_msgs::Imu::ConstPtr& joy) {
 int main(int argc, char** argv) {
   ros::init(argc, argv, "AndroidController");
   AndroidControllerCls android_controller;
-  ros::spin();
+  ros::Rate rate(4.);
+  while(ros::ok())
+  {
+    rate.sleep();
+    ros::spinOnce();
+  }  
+//ros::spin();
 }
