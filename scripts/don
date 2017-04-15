@@ -1,2 +1,3 @@
-espeak "Done"
-
+echo Done...
+espeak "Done" &> /dev/null
+echo .
