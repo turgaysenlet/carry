@@ -1,5 +1,3 @@
-#include <diagnostic_msgs/DiagnosticArray.h>
-#include <diagnostic_msgs/DiagnosticStatus.h>
 #include <errno.h>  // Error number definitions
 #include <fcntl.h>  // File control definitions
 #include <geometry_msgs/Vector3.h>
@@ -11,7 +9,7 @@
 #include <robot_state/robot_state_constants.h>
 #include <ros/console.h>
 #include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
+#include <sensor_msgs/Imu.h>
 #include <speech_engine/speech_request.h>
 #include <std_msgs/Bool.h>
 #include <stdio.h>    // standard input / output functions
@@ -40,27 +38,14 @@ class AndroidControllerCls {
   AndroidControllerCls();
 
  private:
-  void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
-  void joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag);
+  void joyCallback(const sensor_msgs::Imu::ConstPtr& joy);
   void Stop();
   ros::NodeHandle nh_;
 
   ros::Publisher motors_pub_;
   ros::Subscriber joy_sub_;
-  ros::Subscriber joy_diag_sub_;
   ros::Publisher speech_pub_;
 };
-
-void AndroidControllerCls::joyDiagCallback(
-    const diagnostic_msgs::DiagnosticArray::ConstPtr& diag) {
-  if (diag->status.size() > 0) {
-    if (diag->status[0].level != 0) {
-      ROS_WARN("Joystick disconnected");
-      Stop();
-    }
-    // joy_ok = (diag->status[0].level == 0);
-  }
-}
 
 void AndroidControllerCls::Stop() {
   geometry_msgs::Vector3 motors_message;
@@ -76,27 +61,22 @@ void AndroidControllerCls::Stop() {
 AndroidControllerCls::AndroidControllerCls() {
   speech_pub_ = nh_.advertise<speech_engine::speech_request>(
       "speech_engine/speech_request", 1);
-  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>(
-      "joy", 3, &AndroidControllerCls::joyCallback, this);
-  joy_diag_sub_ = nh_.subscribe<diagnostic_msgs::DiagnosticArray>(
-      "diagnostics", 3, &AndroidControllerCls::joyDiagCallback, this);
+  joy_sub_ = nh_.subscribe<sensor_msgs::Imu>(
+      "imu", 3, &AndroidControllerCls::joyCallback, this);
   motors_pub_ = nh_.advertise<geometry_msgs::Vector3>("motors", 1);
 }
 
 float DegreeToRadian(float degree) { return degree / 57.295779524f; }
 
-void AndroidControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
-  float steering = joy->axes[JoyRotationAxis];
+void AndroidControllerCls::joyCallback(const sensor_msgs::Imu::ConstPtr& joy) {
+  float steering = joy->linear_acceleration.x / 5.0f;
   ROS_INFO("steering: %f", steering);
-  float steering_degree = steering * MaximumSteeringAngle;
+  float steering_degree = steering * MaximumSteeringAngle * 0;
 
-  float positive_speed = 0;//joy->axes[JoyLinearAxisPositive];
-  // ROS_INFO("positive_speed: %f", positive_speed);
-  float negative_speed = joy->axes[JoyLinearAxisNegative];
+  float positive_speed = (joy->linear_acceleration.y - 7.0f) / 8.0f;
   // Map from [1,-1] to [0,1]
-  negative_speed = -negative_speed;  
-  int speed = MaximumSpeed * (positive_speed - negative_speed);
-  // ROS_INFO("speed: %f", speed);
+  int speed = MaximumSpeed * positive_speed;
+  ROS_INFO("positive_speed: %f, speed: %d", positive_speed, speed);
 
   geometry_msgs::Vector3 motors_message;
 

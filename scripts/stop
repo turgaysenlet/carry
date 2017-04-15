@@ -1,0 +1,4 @@
+clear;
+echo Stopping...
+rostopic pub /motors -1 geometry_msgs/Vector3 0 0 0
+echo .
