@@ -1,0 +1,4 @@
+cd ~/catkin_ws/
+clear;
+catkin_make -j1 -l1;
+don;
