@@ -8,23 +8,23 @@
     <param name="height" type="int" value="960" />
     <param name="fps" type="int" value="30" />
     <param name="pixel_format" type="string" value="MJPG" />
-    <param name="frame" type="string" value="narrow" />
+    <param name="frame" type="string" value="stereo" />
 
     <!-- other supported params: auto_exposure, exposure_absolute, brightness, power_line_frequency -->
 
-    <param name="left/device" type="string" value="/dev/video2" />
-    <param name="right/device" type="string" value="/dev/video3" />
+    <param name="left/device" type="string" value="/dev/video0" />
+    <param name="right/device" type="string" value="/dev/video1" />
 
     <param name="left/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_left_wide.yaml" />
     <param name="right/camera_info_url" type="string" value="file://$(find ps4eye)/camera_info/c270_right_wide.yaml" />
     
-    <remap from="/left/image_raw" to="/narrow/left/image_raw" />
-    <remap from="/right/image_raw" to="/narrow/right/image_raw" />
-    <remap from="/left/camera_info" to="/narrow/left/camera_info" />
-    <remap from="/right/camera_info" to="/narrow/right/camera_info" />
+    <remap from="/left/image_raw" to="/stereo/left/image_raw" />
+    <remap from="/right/image_raw" to="/stereo/right/image_raw" />
+    <remap from="/left/camera_info" to="/stereo/left/camera_info" />
+    <remap from="/right/camera_info" to="/stereo/right/camera_info" />
   </node>
 
-  <group ns="narrow">
+  <group ns="stereo">
     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen">
       <param name="approximate_sync"      value="false"/>
       <param name="correlation_window_size" value="27"/>
@@ -43,5 +43,5 @@
   </group>
 
   <!-- start viewer -->
-  <node name="stereo_view" pkg="image_view" type="stereo_view" args="stereo:=/narrow image:=image_rect_color" if="$(arg viewer)"/>
+  <node name="stereo_view" pkg="image_view" type="stereo_view" args="stereo:=/stereo image:=image_rect_color" if="$(arg viewer)"/>
 </launch>
