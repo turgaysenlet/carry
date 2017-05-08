@@ -8,11 +8,11 @@
 #include <tf/transform_broadcaster.h>
 
 // Encoder 0
-#define encoder0PinA  2
+#define encoder0PinA  0
 #define encoder0PinB  4
 
 // Encoder 1
-#define encoder1PinA  3
+#define encoder1PinA  1
 #define encoder1PinB  5
 
 // Motor 0
@@ -69,13 +69,15 @@ void setup()
   digitalWrite(encoder0PinA, HIGH);       // turn on pull-up resistor
   pinMode(encoder0PinB, INPUT); 
   digitalWrite(encoder0PinB, HIGH);       // turn on pull-up resistor
-  attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder0, CHANGE);  // encoder pin on interrupt 0 - pin 2
+  //digitalPinToInterrupt
+  attachInterrupt(encoder0PinA, doEncoder0, CHANGE);  // encoder pin on interrupt 0 - pin 2
 
   pinMode(encoder1PinA, INPUT); 
   digitalWrite(encoder1PinA, HIGH);       // turn on pull-up resistor
   pinMode(encoder1PinB, INPUT); 
   digitalWrite(encoder1PinB, HIGH);       // turn on pull-up resistor
-  attachInterrupt(digitalPinToInterrupt(encoder1PinA), doEncoder1, CHANGE);  // encoder pin on interrupt 0 - pin 2
+  //digitalPinToInterrupt
+  attachInterrupt(encoder1PinA, doEncoder1, CHANGE);  // encoder pin on interrupt 0 - pin 2
 
   //pinMode(motor0Pwm, OUTPUT);
   pinMode(motor0Dir, OUTPUT);
