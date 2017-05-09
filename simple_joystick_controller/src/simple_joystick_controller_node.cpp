@@ -28,7 +28,14 @@ const float MaximumSteeringAngle = 80.0f;
 /// <summary>
 /// Maximum forward travel speed where 255 is max motor speed ~4m/s.
 /// </summary>
-const float MaximumSpeed = 120.0f;
+const float MaximumSpeed = 190.0f;
+const float MinimumSpeed = 60.0f;
+const float MinimumInput = 0.1f;
+const float RightSpeedMultiplier = 0.88f;
+const int RightForwardButton = 13;
+const int LeftForwardButton = 12;
+const int RightBackwardButton = 15;
+const int LeftBackwardButton = 14;
 /// <summary>
 /// Turning speed where 255 is max motor speed ~4m/s.
 /// </summary>
@@ -69,21 +76,42 @@ SimpleJoystickControllerCls::SimpleJoystickControllerCls() {
 float DegreeToRadian(float degree) { return degree / 57.295779524f; }
 
 void SimpleJoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
-  float left = -joy->axes[13];  
-  float right = -joy->axes[12];
+  float right = -joy->axes[RightForwardButton];  
+  float left = -joy->axes[LeftForwardButton];
+  float right_back = -joy->axes[RightBackwardButton] * 0.8f;
+  float left_back = -joy->axes[LeftBackwardButton] * 0.8f;
   ROS_INFO("left: %f, right: %f", left, right);
-  int left_speed = MaximumSpeed * left;
-  int right_speed = MaximumSpeed * right;
+
+  int right_speed = (MaximumSpeed - MinimumSpeed) * (right - right_back);
+  int left_speed = (MaximumSpeed - MinimumSpeed) * (left - left_back);
+
   ROS_INFO("left_speed: %d, right_speed: %d", left_speed, right_speed);
+  if (abs(right_speed) < MinimumInput) {
+	right_speed = 0;
+  } else if (right_speed < 0) {
+    right_speed -= MinimumSpeed;
+  }
+  else if (right_speed > 0) {
+    right_speed += MinimumSpeed;
+  }
+
+  if (abs(left_speed) < MinimumInput) {
+	left_speed = 0;
+  } else if (left_speed < 0) {
+    left_speed -= MinimumSpeed;
+  }
+  else if (left_speed > 0) {
+    left_speed += MinimumSpeed;
+  }
 
   geometry_msgs::Vector3 motors_message;
 
-  motors_message.x = left_speed;
-  motors_message.y = right_speed;
+  motors_message.x = right_speed * RightSpeedMultiplier;
+  motors_message.y = left_speed;
   motors_message.z = 0;
 
   motors_pub_.publish(motors_message);
-  ROS_INFO("Left: %d, Right %d", (int)motors_message.x, (int)motors_message.y);
+  ROS_INFO("left_motor: %d, right_motor %d", (int)motors_message.x, (int)motors_message.y);
 }
 
 int main(int argc, char** argv) {
