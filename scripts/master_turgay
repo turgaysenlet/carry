@@ -1,2 +1,4 @@
-echo export ROS_MASTER_URI=http://turgay:11311 export ROS_IP=`(uname -n)` 
-export ROS_MASTER_URI=http://turgay:11311;export ROS_IP=`(uname -n)`
+echo export ROS_MASTER_URI=http://turgay.turgaysenlet:11311 export ROS_IP=`(uname -n)`
+echo MAKE SURE TO SOURCE THIS FILE!
+export ROS_MASTER_URI=http://turgay.turgaysenlet:11311;export ROS_IP=`(uname -n)`
+

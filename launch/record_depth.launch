@@ -1,0 +1,10 @@
+<launch> 
+  <node pkg="rosbag" type="record" name="record" output="screen" args="
+   camera/depth/image_rect_raw
+   image_raw
+   camera_info
+   tf
+   tf_static
+   -o /media/data/bag/depth">
+  </node> 
+</launch> 
