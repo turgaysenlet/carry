@@ -60,14 +60,11 @@
 #include <string>
 #include <time.h>
 
-
 using namespace std;
 using namespace cv;
 
 // OpenCV publishing windows
 static const std::string OPENCV_WINDOW = "Image window";
-
-
 
 //####################################################################
 //#                                                                  #
@@ -84,13 +81,14 @@ class FaceDetector
 
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
+  image_transport::Subscriber depth_sub_;
   image_transport::Publisher image_pub_;
+  image_transport::Publisher depth_pub_;
   ros::Publisher faceCoord_pub;
 
   // required for the dynamic reconfigure server
   dynamic_reconfigure::Server<face_detection::face_trackConfig> srv;
   dynamic_reconfigure::Server<face_detection::face_trackConfig>::CallbackType f;
-
 
   // image processing variables
   int brightnessFactor;
@@ -127,8 +125,9 @@ class FaceDetector
 
   // publish subscribe variables
   string imageInput = "/image_raw";
+  string depthInput = "/camera/depth/image_raw";
   string imageOutput = "/face_det/image_raw";
-
+  string depthOutput = "/face_det/depth_out";
 
   // variables containing cascades
   cv::CascadeClassifier face_cascade;
@@ -142,15 +141,18 @@ class FaceDetector
   std::vector<cv::Rect> faces;
   std::vector<int> lastSeen;
   std::vector<int> faceID;
+  int faceDepth[20] = {0};
   std::vector<int> detectionLength;
 
-  std::vector<cv::Rect>::const_iterator i;
+  bool depthReceived = false;
 
+  std::vector<cv::Rect>::const_iterator i;
 
   // Image Mats used for tracking
   Mat previousFrame;
   Mat inputImage;
   Mat gray;
+  Mat depthGray;
 
   // timing variables
   ros::Time begin;
@@ -160,8 +162,130 @@ class FaceDetector
   float totalTime;
   struct timeval tinit_time;
   queue <timeval> fpsTimeQueue;
+  cv_bridge::CvImagePtr depth_cv_ptr;
 
 private:
+    void calcHistogram(cv::Mat& input, cv::Mat& histo, double mini, double maxi, int buckets) {
+      printf("Entering calcHistogram\n");      
+      for (int i = 0; i < input.rows; i++) {
+        for (int j = 0; j < input.cols; j++) {
+          int k = (int)((double)buckets * (input.at<unsigned short>(j, i) - mini) / (maxi - mini));
+          if (k >=0 && k < buckets) {
+           histo.at<unsigned short>(k)++;
+          } else {
+            printf("+++++Wrong k: %d\n", k);
+          }
+        }
+      }
+      
+      printf("Exiting calcHistogram \n");      
+    }
+
+    double lowestPeakMat(cv::Mat input){
+      double min1,max1=0;
+      minMaxLoc(input, &min1, &max1);
+      printf("Entering lowestPeakMat %f, %f\n", min1,max1);
+
+      printf("Entering lowestPeakMat %d, %d, %d\n", input.rows,input.cols,input.channels());
+      // COMPUTE HISTOGRAM OF SINGLE CHANNEL MATRIX
+      int buckets = 256;
+      cv::Mat histo(1, buckets, CV_16UC1);
+      for (int i = 0; i < buckets; i++) {
+        histo.at<unsigned short>(i) = 0;
+      }
+      
+      calcHistogram(input, histo, 0, 8192, buckets);
+      minMaxLoc(histo, &min1, &max1);
+      printf("Entering hist %f, %f\n", min1,max1);
+
+      cv::Mat cdf;
+      printf("17.2.1\n");
+      histo.copyTo(cdf);
+      // Remove blacks/unknowns
+      cdf.at<unsigned short>(0) = 0;
+      printf("17.2.2\n");
+      int total = cdf.total();
+      unsigned short p = 0;
+      unsigned short c = cdf.at<unsigned short>(1);
+      unsigned short n = 0;
+      int lowestPeakVal = 0;
+      for (int i = 1; i < buckets-1; i++){
+          n = cdf.at<unsigned short>(i+i);
+          if (c > total / 1000 && p < c && c > n) { 
+            printf("+++++Exiting lowestPeakMat, i: %d, c: %d, p: %d, n: %d \n", i, p, c, n);
+            lowestPeakVal = i;  break; 
+          }
+          p = c;
+          c = n;
+      }
+      
+      return lowestPeakVal;
+    }
+
+    double medianMat(cv::Mat input){
+      double min1,max1=0;
+      minMaxLoc(input, &min1, &max1);
+      printf("Entering medianMat %f, %f\n", min1,max1);
+
+      printf("Entering medianMat %d, %d, %d\n", input.rows,input.cols,input.channels());
+      // COMPUTE HISTOGRAM OF SINGLE CHANNEL MATRIX
+      int buckets = 256;
+      cv::Mat histo(1, buckets, CV_16UC1);
+      for (int i = 0; i < buckets; i++) {
+        histo.at<unsigned short>(i) = 0;
+      }
+      
+      //calcHistogram(&input, 1, 0, cv::Mat(), histo, 1, &nVals, &histRange, uniform, accumulate);
+      calcHistogram(input, histo, 0, 8192, buckets);
+      minMaxLoc(histo, &min1, &max1);
+      printf("Entering hist %f, %f\n", min1,max1);
+
+      // COMPUTE CUMULATIVE DISTRIBUTION FUNCTION (CDF)
+      cv::Mat cdf;
+      printf("17.2.1\n");
+      histo.copyTo(cdf);
+      printf("17.2.2\n");
+      for (int i = 1; i <= buckets-1; i++){
+          cdf.at<unsigned short>(i) += cdf.at<unsigned short>(i - 1);
+      }
+      printf("17.2.3\n");
+      double total = input.total();
+      printf("17.2.3 total: %f\n", total);
+      cdf /= total;
+      printf("17.2.4\n");
+
+      // COMPUTE MEDIAN
+      double medianVal = 0;
+      for (int i = 0; i <= buckets-1; i++){
+          if (cdf.at<unsigned short>(i) >= 0.8) { 
+            printf("+++++Exiting medianMat, i %d, %f, %f \n", i, cdf.at<unsigned short>(i), histo.at<unsigned short>(i));
+            medianVal = i;  break; }
+      }
+      printf("17.2.5\n");
+      
+      return medianVal;
+    }
+
+    //####################################################################
+    //############# called every time theres a new depth image #################
+    //####################################################################
+    void newDepthCallBack(const sensor_msgs::ImageConstPtr& msg)
+    {
+      try
+      {
+        depth_cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_16UC1);
+      }
+      catch (cv_bridge::Exception& e)
+      {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+      } 
+      depth_cv_ptr->image.convertTo(depthGray, -1, 1.0, 0);
+      // create B&W image
+      //cvtColor( depthGray, depthGray, CV_BGR2GRAY );
+      depthReceived = true;
+      // imwrite("/tmp/depth.png", depthGray);
+    }
 
     //####################################################################
     //############# called every time theres a new image #################
@@ -170,17 +294,15 @@ private:
     {
 
       if (gCounter < 0) {
-	printf("newimage- WRONG COUNTER: gCounter %d gFps %d \n",gCounter, gFps );
-	gCounter = 2;
-	printf("newimage- gCounter %d gFps %d \n",gCounter, gFps );
+      	printf("newimage- WRONG COUNTER: gCounter %d gFps %d \n",gCounter, gFps );
+      	gCounter = 2;
+      	printf("newimage- gCounter %d gFps %d \n",gCounter, gFps );
       };
     
-
       // starts time calculations
       struct timeval tstart, tend;
       gettimeofday(&tstart, NULL);
       fpsTimeQueue.push(tstart);
-
 
       // retrieves the image from the camera driver
       // ###############################################
@@ -194,7 +316,6 @@ private:
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
       }
-
 
       // run only on the first frame
       if (totalFrameCounter == 0) {
@@ -211,7 +332,6 @@ private:
 
       // change contrast: 0.5 = half  ; 2.0 = double
       cv_ptr->image.convertTo(gray, -1, contrastFactor, 0);
-
       // create B&W image
       cvtColor( gray, gray, CV_BGR2GRAY );
 
@@ -241,7 +361,7 @@ private:
       std::vector<cv::Rect> newFaces;
 
       if(gCounter > gFps -1){
-      printf("Processing: gCounter %d gFps %d \n",gCounter, gFps );
+        printf("Processing: gCounter %d gFps %d \n",gCounter, gFps );
         face_cascade.detectMultiScale(
           gray,                       // input image (grayscale)
           newFaces,                      // output variable containing face rectangle
@@ -251,6 +371,8 @@ private:
           cv::Size(minSize*imgScale, minSize*imgScale), // minimum size
           cv::Size(maxSize*imgScale, maxSize*imgScale)  // minimum size
         );
+        
+        printf("2\n");
 
         //printf("min %d max %d newFaces.size %d\n",minSize, maxSize, newFaces.size() );
         //printf("min_scale %f max_scale %f\n",minSize*imgScale, maxSize*imgScale );
@@ -263,15 +385,16 @@ private:
               newFaces[i].height = newFaces[i].height/imgScale;
           }
         }
+        printf("3\n");
       } else {
         printf("NOT Processing: gCounter %d gFps %d \n",gCounter, gFps );
       }
 
-
+      printf("4\n");
       //####################################################################
       //####################### tracking part ##############################
       //####################################################################
-      // tracking the featres between the previeous and the current frame
+      // tracking the features between the previous and the current frame
       Mat croppedImage;
       int mx;
       int my;
@@ -281,6 +404,7 @@ private:
 
       // iterates trough all faces from previous cycle
       for (unsigned i = 0; i < faces.size(); i++) {
+        printf("5\n");
         mx = faces[i].x;
         my = faces[i].y;
         mh = faces[i].height;
@@ -313,13 +437,14 @@ private:
                 cv::circle(cv_ptr->image, cv::Point(features_prev[j].x , features_prev[j].y), 1, CV_RGB(255,0,0),CV_FILLED);
             }
         }
-
+        printf("6\n");
 
 
         // Optical Flow
         // #############################################################
         cv::Size winSize(trackSearchWinSize,trackSearchWinSize);
         if(features_prev.size() != 0){
+          printf("7\n");
             cv::calcOpticalFlowPyrLK(
               previousFrame, inputImage, // 2 consecutive images
               features_prev, // input point positions in first im
@@ -329,6 +454,7 @@ private:
               winSize
             );
         }
+        printf("8\n");
 
 
 
@@ -368,6 +494,8 @@ private:
 
       }
 
+      printf("10\n");
+
 
       //####################################################################
       //################### find intersection  #############################
@@ -376,6 +504,7 @@ private:
       // if we have an intersection, the tracked faces is udated with a new detection
       // if we have no intersection, the new detection is added to the current faces
       if(gCounter > gFps -1){
+          printf("11\n");
           gCounter = 0;
 
           for (unsigned i = 0; i < newFaces.size(); i++) {
@@ -405,6 +534,7 @@ private:
 
               }
           }
+          printf("12\n");
 
 
       //####################################################################
@@ -425,10 +555,11 @@ private:
                   detectionLength[i] = detectionLength[i] + 1;
               }
           }
+          printf("14\n");
       }
 
 
-
+      printf("15\n");
 
       //####################################################################
       //############ last part (printing drawing publishing) ###############
@@ -439,6 +570,23 @@ private:
 
       // keep track of number of total detections
       totalDetections += faces.size();
+      printf("16\n");
+
+      Mat depthFace;
+      int jj = 0; 
+      if (depthReceived) {
+        for (i = faces.begin(); i != faces.end(); ++i, ++jj) {
+            printf("17.1, %d %d, %dx%d\n", (i->x),(i->y),(i->width), (i->height));
+            Rect cropROI((i->x),(i->y),(i->width), (i->height));
+            depthFace = depth_cv_ptr->image(cropROI);
+            printf("17.2\n");
+            int lowestDepth = (int)lowestPeakMat(depthFace);
+            printf("17.3\n");
+            faceDepth[jj] = lowestDepth;
+            printf("17.4\n");
+        }
+      }
+      printf("18\n");
 
       // print faces on top of image
       if(pixelSwitch == 0){
@@ -483,6 +631,9 @@ private:
           // Output modified video stream
           if(publish == 1 || publish == 3){
               image_pub_.publish(cv_ptr->toImageMsg());
+              if (depthReceived) {
+                depth_pub_.publish(depth_cv_ptr->toImageMsg());
+              }
           }
 
 
@@ -541,7 +692,11 @@ private:
       totalFrameCounter += 1;
       cv::waitKey(3);
 
-
+      // if (depthReceived && faces.size() > 0) {
+      //   imwrite("/tmp/gray.png", inputImage);
+      //   exit(0);
+      // }
+      
 
     }
 
@@ -600,7 +755,7 @@ private:
               cv::Point(maxSize+1, maxSize+20),
               CV_RGB(255, 50 , 50),
               CV_FILLED);
-            cv::putText(myImage, "min/max size", cv::Point(5, maxSize+15), CV_FONT_NORMAL, 0.5, Scalar(255,255,255),1,1);
+            // cv::putText(myImage, "min/max size", cv::Point(5, maxSize+15), CV_FONT_NORMAL, 0.5, Scalar(255,255,255),1,1);
 
             //draw fps numbers
             string fpsText = "FPS: " + std::to_string((int)fps);
@@ -611,6 +766,8 @@ private:
 
 
         for (unsigned i = 0; i < faces.size(); ++i) {
+            int faceDepthRatio = (faces[i].width + faces[i].height) * (faceDepth[i] / 100.0f);
+            if (faceDepthRatio < 80) {continue;};
             int boxSize = 25;
             if(faceID[i] > 99){boxSize = 36;}
 
@@ -670,19 +827,15 @@ private:
 
             // print the ID of the face
             cv::putText(myImage, std::to_string(faceID[i]), cv::Point(faces[i].x+1,faces[i].y+faces[i].height+15), CV_FONT_NORMAL, 0.5, Scalar(255,255,255),1,1);
-
-
-
+            // print the average depth of the face
+            cv::putText(myImage, std::to_string(faceDepth[i]), cv::Point(faces[i].x+1+40,faces[i].y+faces[i].height+15), CV_FONT_NORMAL, 0.5, Scalar(255,255,255),1,1);
+            // print the size divided by average depth of the face
+            cv::putText(myImage, std::to_string(faceDepthRatio), cv::Point(faces[i].x+1+80,faces[i].y+faces[i].height+15), CV_FONT_NORMAL, 0.5, Scalar(255,255,255),1,1);
         }
-
-
         return myImage;
     }
 
-
 public:
-
-
 
   //######################################################################
   //##################### constructor ####################################
@@ -753,9 +906,12 @@ public:
 
     // Subscribing to the input images.
     image_sub_ = it_.subscribe(imageInput, inputSkipp, &FaceDetector::newImageCallBack, this);
+    depth_sub_ = it_.subscribe(depthInput, inputSkipp, &FaceDetector::newDepthCallBack, this);
 
     // Publishing the output images.
     image_pub_ = it_.advertise(imageOutput, inputSkipp);
+    depth_pub_ = it_.advertise(depthOutput, inputSkipp);
+
     printf("################\n" );
 
     //loads in the different cascade detection files
@@ -930,25 +1086,29 @@ public:
       image_sub_ = it_.subscribe(imageInput, inputSkipp, &FaceDetector::newImageCallBack, this);
     }
 
+    // changes the location of the depth images
+    // ######################################
+    if (depthInput != config.depthInput || inputSkipp != config.inputSkipp) {
+      depthInput = config.depthInput;
+      depth_sub_ = it_.subscribe(depthInput, inputSkipp, &FaceDetector::newDepthCallBack, this);
+    }
+
     // changes the publication location
     // ######################################
     if (imageOutput != config.imageOutput || inputSkipp != config.inputSkipp) {
       imageOutput = config.imageOutput;
       image_pub_ = it_.advertise(imageOutput, inputSkipp);
+      depth_pub_ = it_.advertise(depthOutput, inputSkipp);
     }
 
   }
-
 
   // check the reconfigure sever
   void callSrv()
   {
     srv.setCallback(f);
   }
-
 };
-
-
 
 
 //########################################################
