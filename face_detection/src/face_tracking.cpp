@@ -68,6 +68,18 @@ using namespace cv;
 // OpenCV publishing windows
 static const std::string OPENCV_WINDOW = "Image window";
 
+struct Target {
+  int targetNo = 0;
+  int x = 0;
+  int y = 0;
+  int w = 0;
+  int h = 0;
+  int cX() { return x + w / 2; }
+  int cY() { return y + h / 2; }
+  int depth = 0;
+  int thresholdedCount = 0;
+};
+
 //####################################################################
 //#                                                                  #
 //####################################################################
@@ -144,6 +156,11 @@ class FaceDetector {
   int faceDepth[20] = {0};
   int depthFacesCenterX[20] = {0};
   int depthFacesCenterY[20] = {0};
+  static const int depthFacesCentersBufferSize = 200;
+  int depthFacesCentersX[depthFacesCentersBufferSize] = {0};
+  int depthFacesCentersY[depthFacesCentersBufferSize] = {0};
+  Target targets[depthFacesCentersBufferSize];
+  int depthFacesCounter = 0;
   std::vector<int> detectionLength;
 
   bool depthReceived = false;
@@ -167,22 +184,29 @@ class FaceDetector {
   cv_bridge::CvImagePtr depth_cv_ptr;
 
  private:
-  void depthThresholdedCentroid(const cv::Mat& input, int lowestDepth, double mini, double maxi, int buckets, int& xx, int& yy) {
-  	double x = 0;
-  	double y = 0;
-  	int count = 0;
-  	for (int i = 0; i < input.rows; i++) {
+  void depthThresholdedCentroid(const cv::Mat& input, int lowestDepth,
+                                double mini, double maxi, int buckets, int& xx,
+                                int& yy) {
+    double x = 0;
+    double y = 0;
+    int count = 0;
+    for (int i = 0; i < input.rows; i++) {
       for (int j = 0; j < input.cols; j++) {
-        int k = (int)((double)buckets * (input.at<unsigned short>(j, i) - mini) / (maxi - mini));
+        int k = (int)((double)buckets *
+                      (input.at<unsigned short>(j, i) - mini) / (maxi - mini));
         if (k == 0 || ((k < lowestDepth + 3) && (k > lowestDepth - 3))) {
           count++;
-          x+=i;
-          y+=j;
+          x += i;
+          y += j;
         }
       }
     }
-    xx = x / (double)count;
-    yy = y / (double)count;
+    xx = 0;
+    yy = 0;
+    if (count > 0) {
+      xx = x / (double)count;
+      yy = y / (double)count;
+    }
   }
 
   void calcHistogram(cv::Mat& input, cv::Mat& histo, double mini, double maxi,
@@ -208,7 +232,8 @@ class FaceDetector {
     minMaxLoc(input, &min1, &max1);
     // printf("Entering lowestPeakMat %f, %f\n", min1, max1);
 
-    // printf("Entering lowestPeakMat %d, %d, %d\n", input.rows, input.cols, input.channels());
+    // printf("Entering lowestPeakMat %d, %d, %d\n", input.rows, input.cols,
+    // input.channels());
     // COMPUTE HISTOGRAM OF SINGLE CHANNEL MATRIX
     int buckets = 256;
     cv::Mat histo(1, buckets, CV_16UC1);
@@ -234,7 +259,8 @@ class FaceDetector {
     for (int i = 1; i < buckets - 1; i++) {
       n = cdf.at<unsigned short>(i + i);
       if (c > total / 1000 && p < c && c > n) {
-        // printf("+++++Exiting lowestPeakMat, i: %d, c: %d, p: %d, n: %d \n", i, p, c, n);
+        // printf("+++++Exiting lowestPeakMat, i: %d, c: %d, p: %d, n: %d \n",
+        // i, p, c, n);
         lowestPeakVal = i;
         break;
       }
@@ -250,7 +276,8 @@ class FaceDetector {
     minMaxLoc(input, &min1, &max1);
     // printf("Entering medianMat %f, %f\n", min1, max1);
 
-    // printf("Entering medianMat %d, %d, %d\n", input.rows, input.cols, input.channels());
+    // printf("Entering medianMat %d, %d, %d\n", input.rows, input.cols,
+    // input.channels());
     // COMPUTE HISTOGRAM OF SINGLE CHANNEL MATRIX
     int buckets = 256;
     cv::Mat histo(1, buckets, CV_16UC1);
@@ -283,7 +310,7 @@ class FaceDetector {
     for (int i = 0; i <= buckets - 1; i++) {
       if (cdf.at<unsigned short>(i) >= 0.8) {
         // printf("+++++Exiting medianMat, i %d, %f, %f \n", i,
-               // cdf.at<unsigned short>(i), histo.at<unsigned short>(i));
+        // cdf.at<unsigned short>(i), histo.at<unsigned short>(i));
         medianVal = i;
         break;
       }
@@ -592,7 +619,8 @@ class FaceDetector {
     int jj = 0;
     if (depthReceived) {
       for (i = faces.begin(); i != faces.end(); ++i, ++jj) {
-        // printf("17.1, %d %d, %dx%d\n", (i->x), (i->y), (i->width), (i->height));
+        // printf("17.1, %d %d, %dx%d\n", (i->x), (i->y), (i->width),
+        // (i->height));
         Rect cropROI((i->x), (i->y), (i->width), (i->height));
         depthFace = depth_cv_ptr->image(cropROI);
         // printf("17.2\n");
@@ -604,10 +632,19 @@ class FaceDetector {
         int xx = 0;
         int yy = 0;
         int buckets = 256;
-        depthThresholdedCentroid(depthFace, lowestDepth, 0, 8192, buckets, xx, yy);
+        depthThresholdedCentroid(depthFace, lowestDepth, 0, 8192, buckets, xx,
+                                 yy);
         depthFacesCenterX[jj] = xx;
         depthFacesCenterY[jj] = yy;
-      }      	
+        depthFacesCentersX[depthFacesCounter % depthFacesCentersBufferSize] =
+            xx + i->x;
+        depthFacesCentersY[depthFacesCounter % depthFacesCentersBufferSize] =
+            yy + i->y;
+        // printf("Setting face no: %d - x: %d, y: %d\n", depthFacesCounter,
+        // depthFacesCentersX[depthFacesCounter],
+        // depthFacesCentersY[depthFacesCounter]);
+        depthFacesCounter++;
+      }
     }
 
     // printf("18\n");
@@ -763,6 +800,19 @@ class FaceDetector {
                   Scalar(255, 50, 50), 1, 1);
     }
 
+    for (int i = 0; i < depthFacesCentersBufferSize; ++i) {
+      int w = 2;
+      if (depthFacesCentersX[i] == 0 || depthFacesCentersY[i] == 0) {
+        continue;
+      }
+      // printf("Face no: %d - x: %d, y: %d\n", i, depthFacesCentersX[i], depthFacesCentersY[i]);
+      cv::rectangle(
+          myImage,
+          cv::Point(depthFacesCentersX[i] - w, depthFacesCentersY[i] - w),
+          cv::Point(depthFacesCentersX[i] + w, depthFacesCentersY[i] + w),
+          CV_RGB(150, 150, 150), CV_FILLED);
+    }
+    printf("Done.\n");
     for (unsigned i = 0; i < faces.size(); ++i) {
       int faceDepthRatio =
           (faces[i].width + faces[i].height) * (faceDepth[i] / 100.0f);
@@ -770,16 +820,16 @@ class FaceDetector {
         continue;
       };
       int w = 2;
-      cv::rectangle(myImage, cv::Point((faces[i].x + faces[i].width/2 - w), (faces[i].y + faces[i].height/2 - w)),
-                      cv::Point((faces[i].x) + (faces[i].width/2) + w,
-                                (faces[i].y) + (faces[i].height/2) + w),
-                      CV_RGB(50, 255, 50),
-                    CV_FILLED);
-	  cv::rectangle(myImage, cv::Point((faces[i].x + depthFacesCenterX[i] - w), (faces[i].y + depthFacesCenterY[i] - w)),
-                      cv::Point((faces[i].x) + (depthFacesCenterX[i]) + w,
-                                (faces[i].y) + (depthFacesCenterY[i]) + w),
-                      CV_RGB(255, 50, 50),
-                    CV_FILLED);
+      cv::rectangle(myImage, cv::Point((faces[i].x + faces[i].width / 2 - w),
+                                       (faces[i].y + faces[i].height / 2 - w)),
+                    cv::Point((faces[i].x) + (faces[i].width / 2) + w,
+                              (faces[i].y) + (faces[i].height / 2) + w),
+                    CV_RGB(50, 255, 50), CV_FILLED);
+      cv::rectangle(myImage, cv::Point((faces[i].x + depthFacesCenterX[i] - w),
+                                       (faces[i].y + depthFacesCenterY[i] - w)),
+                    cv::Point((faces[i].x) + (depthFacesCenterX[i]) + w,
+                              (faces[i].y) + (depthFacesCenterY[i]) + w),
+                    CV_RGB(255, 50, 50), CV_FILLED);
 
       int boxSize = 25;
       if (faceID[i] > 99) {
