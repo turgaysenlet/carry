@@ -1,0 +1,2 @@
+echo export ROS_MASTER_URI=http://$1:11311 export ROS_IP=`(uname -n)` 
+export ROS_MASTER_URI=http://$1:11311;export ROS_IP=`(uname -n)`
