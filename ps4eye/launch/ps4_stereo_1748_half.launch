@@ -41,7 +41,7 @@
     <param name="video_device" value="/dev/video0" />
     <param name="image_width" value="1748" />
     <param name="image_height" value="408" />
-    <param name="framerate" value="15" />
+    <param name="framerate" value="10" />
     <param name="pixel_format" value="yuyv" />
     <param name="camera_frame_id" value="ps4eye_frame" />
     <param name="io_method" value="mmap"/>
