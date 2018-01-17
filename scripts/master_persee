@@ -1,0 +1,3 @@
+echo export ROS_MASTER_URI=http://persee.turgaysenlet:11311 export ROS_IP=`(uname -n)` 
+echo MAKE SURE TO SOURCE THIS FILE!
+export ROS_MASTER_URI=http://persee.turgaysenlet:11311;export ROS_IP=`(uname -n)`

@@ -1,0 +1,6 @@
+export TURTLEBOT_BASE=create
+export TURTLEBOT_STACKS=circles
+export TURTLEBOT_3D_SENSOR=asus_xtion_pro
+export TURTLEBOT_GAZEBO_WORLD_FILE=/opt/ros/kinetic/share/turtlebot_gazebo/worlds/playground.world
+#roslaunch turtlebot_gazebo turtlebot_world.launch
+roslaunch turtlebot_gazebo gmapping_demo.launch
