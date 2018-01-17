@@ -1,6 +1,6 @@
 image_width: 1748
 image_height: 408
-camera_name: default
+camera_name: ps4eye
 camera_matrix:
   rows: 3
   cols: 3
