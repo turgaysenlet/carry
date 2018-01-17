@@ -1,0 +1,4 @@
+echo export ROS_MASTER_URI=http://10.0.1.186:11311 export ROS_IP=10.0.1.190
+echo MAKE SURE TO SOURCE THIS FILE!
+export ROS_MASTER_URI=http://10.0.1.186:11311;export ROS_IP=10.0.1.190
+
