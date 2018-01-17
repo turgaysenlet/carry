@@ -86,7 +86,7 @@
     <param name="right_file_name" value="$(arg camera_info_file_right)" />
   </node>
 
-  <group ns="narrow">
+  <group ns="stereo">
     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen">
       <param name="approximate_sync"      value="false"/>
       <param name="correlation_window_size" value="27"/>
