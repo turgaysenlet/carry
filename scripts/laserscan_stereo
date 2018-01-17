@@ -1,0 +1,2 @@
+echo rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/stereo/disparity
+rosrun depthimage_to_laserscan depthimage_to_laserscan image:=/stereo/disparity
