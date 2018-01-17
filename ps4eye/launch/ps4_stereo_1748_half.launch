@@ -31,7 +31,7 @@
 
 
   <!-- The GStreamer framerate needs to be an integral fraction -->
-  <arg name="FPS" default="15/1"/>
+  <arg name="FPS" default="10/1"/>
   <!-- Available resolution should be 3448x808, 1748x408,1744x408,898x200,896x200 -->
   <arg name="width" default="1748"/>
   <arg name="height" default="408"/>
@@ -94,8 +94,8 @@
     <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen">
       <param name="approximate_sync"      value="false"/>
       <param name="correlation_window_size" value="13"/>
-      <param name="disparity_range"         value="96"/>
-      <param name="min_disparity"       value="-64"/>
+      <param name="disparity_range"         value="64"/>
+      <param name="min_disparity"       value="0"/>
       <param name="prefilter_cap"       value="1"/>
       <param name="prefilter_size"      value="9"/>
       <param name="queue_size"            value="3"/>
