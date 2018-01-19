@@ -43,7 +43,8 @@ private:
 
 DepthImagePublisherCls::DepthImagePublisherCls() : it_(nh_)
 {
-	image_pub_ = it_.advertise("/stereo/disparity2", 1);
+//	image_pub_ = it_.advertise("/stereo/disparity2", 1);
+	image_pub_ = it_.advertise("/stereo/left/image_raw", 1);
 	disp_image_sub_ = nh_.subscribe("/stereo/disparity", 1, &DepthImagePublisherCls::disparityCallback, this);	
 }
 
