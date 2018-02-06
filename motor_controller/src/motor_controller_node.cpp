@@ -177,7 +177,7 @@ MotorControllerCls::MotorControllerCls()
 
 void MotorControllerCls::SetServoPosition(int channel_no, int target)
 {
-	ROS_INFO("Speed sent: %0.2f, Speed: %0.2f, target: %d, servono: %d", desired_speed, desired_speed_final, target, channel_no);
+	ROS_INFO("Speed sent: %0.2f, speed: %0.2f, target: %d, servono: %d", desired_speed, desired_speed_final, target, channel_no);
 	servo_controller::servo_control message;
 	message.servo_no = channel_no;
 	message.target = target;

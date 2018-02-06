@@ -70,7 +70,7 @@ void JoystickControllerCls::Stop() {
   motors_message.z = 0;
 
   motors_pub_.publish(motors_message);
-  ROS_INFO("Left: %d, Right %d", 0, 0);
+  //ROS_INFO("Left: %d, Right %d", 0, 0);
 }
 
 JoystickControllerCls::JoystickControllerCls() {
@@ -87,7 +87,6 @@ float DegreeToRadian(float degree) { return degree / 57.295779524f; }
 
 void JoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
   float steering = joy->axes[JoyRotationAxis];
-  ROS_INFO("steering: %f", steering);
   float steering_degree = steering * MaximumSteeringAngle;
 
   float positive_speed = 0;//joy->axes[JoyLinearAxisPositive];
@@ -104,9 +103,11 @@ void JoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
   motors_message.x = -sin(steering_radian) * TurningSpeed + speed;
   motors_message.y = sin(steering_radian) * TurningSpeed + speed;
   motors_message.z = 0;
+  
+  ROS_INFO("speed: %0.2f, steering: %0.2f", speed, steering);
 
   motors_pub_.publish(motors_message);
-  ROS_INFO("Left: %d, Right %d", (int)motors_message.x, (int)motors_message.y);
+  //ROS_INFO("Left: %d, Right %d", (int)motors_message.x, (int)motors_message.y);
 }
 
 int main(int argc, char** argv) {

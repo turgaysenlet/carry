@@ -1,0 +1,16 @@
+const int JoyIgnitionButton = 1;
+const int JoyStopStateButtonNo = 2; // Button 3
+const int JoyAutonomousStateButtonNo = 3; // Button 4
+const int JoyRemoteStateButtonNo = 4; // Button 5
+const int JoyFollowSidewalkStateButtonNo = 5; // Button 6
+const int JoyIgnitionResetButton = 6;
+const int RightForwardButton = 13;
+const int LeftForwardButton = 12;
+const int RightBackwardButton = 15;
+const int LeftBackwardButton = 14;
+
+const int JoyRotationAxis = 0;
+const int JoyLinearAxisNegative = 1;
+const int JoyHeadRotationAxis = 2;
+const int JoyLinearAxisPositive = 3;
+

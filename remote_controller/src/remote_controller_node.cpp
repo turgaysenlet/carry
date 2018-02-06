@@ -77,7 +77,7 @@ void RemoteControllerCls::Stop()
 	speed_steering_message.head_degree.degree = 0;
 
 	speed_steering_pub_.publish(speed_steering_message);
-	ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, 0, 0, 0);
+	ROS_INFO("Speed: %f, steering: %0.2f, head: %0.2f", 0, 0, 0);
 }
 RemoteControllerCls::RemoteControllerCls()
 {
@@ -195,7 +195,7 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 						float steering = joy->axes[JoyRotationAxis];
 						float steering_degree = steering * MaximumSteeringAngle;
 						float head = joy->axes[JoyHeadRotationAxis];						
-						float head_degree = steering * MaximumHeadAngle; // head * MaximumHeadAngle;
+						float head_degree = head * MaximumHeadAngle; // head * MaximumHeadAngle;
 
 						float positive_speed = joy->axes[JoyLinearAxisPositive];
 						// Map from [1,-1] to [0,1]
@@ -213,7 +213,7 @@ void RemoteControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 						speed_steering_message.head_degree.degree = head_degree;
 
 						speed_steering_pub_.publish(speed_steering_message);
-						ROS_INFO("Joy OK: %d, Speed: %f, Steering %f, Head %f", joy_ok, speed_mps, steering_degree, head_degree);
+						ROS_INFO("Speed: %0.2f, steering: %0.2f, head: %0.2f", speed_mps, steering_degree, head_degree);
 					}
 				}
 			}

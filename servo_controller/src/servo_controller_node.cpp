@@ -187,7 +187,7 @@ void ServoControllerCls::SetServoPosition(int channel_no, int target_position) {
 	}
 	else
 	{
-		ROS_LOG(Info, ROSCONSOLE_DEFAULT_NAME, "Set servo no: %d, target: %d", channel_no, target_position);
+		ROS_LOG(Info, ROSCONSOLE_DEFAULT_NAME, "Servo %d: %d", channel_no, target_position);
 	}
 }
 
