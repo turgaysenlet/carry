@@ -5,11 +5,10 @@ project(face_detection)
 set(CMAKE_CXX_FLAGS "-std=gnu++0x ${CMAKE_CXX_FLAGS}")
 
 
-
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+find_package(OpenCV)
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
@@ -162,20 +161,22 @@ add_dependencies(face_tracking ${PROJECT_NAME}_gencfg)
 # )
 target_link_libraries(face_detection
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
 )
 #target_link_libraries(face_detection_cuda
 #   ${catkin_LIBRARIES}
 #)
 target_link_libraries(face_tracking
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
 )
 #target_link_libraries(face_tracking_cuda
 #   ${catkin_LIBRARIES}
 #)
 target_link_libraries(face_listener
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
 )
-
 
 #############
 ## Install ##
