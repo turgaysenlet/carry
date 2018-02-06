@@ -77,7 +77,7 @@ void RemoteControllerCls::Stop()
 	speed_steering_message.head_degree.degree = 0;
 
 	speed_steering_pub_.publish(speed_steering_message);
-	ROS_INFO("Speed: %f, steering: %0.2f, head: %0.2f", 0, 0, 0);
+	ROS_INFO("Speed: %0.2f, steering: %0.2f, head: %0.2f", 0.0, 0.0, 0.0);
 }
 RemoteControllerCls::RemoteControllerCls()
 {
