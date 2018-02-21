@@ -1,0 +1,2 @@
+echo "rosrun servo_controller servo_controller_node"
+rosrun servo_controller servo_controller_node

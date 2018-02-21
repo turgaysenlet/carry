@@ -1,0 +1,2 @@
+echo "rosrun joy joy_node"
+rosrun joy joy_node

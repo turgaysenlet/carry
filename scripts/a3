@@ -1,0 +1,2 @@
+echo "rosrun speech_engine speech_engine_node"
+rosrun speech_engine speech_engine_node
