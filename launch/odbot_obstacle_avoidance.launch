@@ -1,0 +1,36 @@
+<launch>  
+
+<arg name="manager" default="manager" /> <!-- Must be globally qualified -->
+<arg name="viewer" default="true" /> <!-- Must be globally qualified -->
+  
+<node pkg="tf" type="static_transform_publisher"
+   name="camera_link_to_camera"
+   args="0 0 -0.04 1.57079632695 3.1415926539 1.57079632695 /camera_link /camera 50">
+</node>
+
+<node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node">
+</node>
+
+<node name="robot_state_node" pkg="robot_state" type="robot_state_node">
+</node>
+
+<node name="joy_node" pkg="joy" type="joy_node">
+</node>
+
+<node name="motor_controller_node" pkg="motor_controller" type="motor_controller_node">
+</node>
+
+<node name="remote_controller_node" pkg="remote_controller" type="remote_controller_node">
+</node>
+
+<node name="servo_controller_node" pkg="servo_controller" type="servo_controller_node">
+</node>
+
+<node name="autonomous_controller_node" pkg="autonomous_controller" type="autonomous_controller_node">
+</node>
+
+<node name="obstable_detector_node" pkg="obstable_detector" type="obstable_detector_node">
+</node>
+
+
+</launch>
