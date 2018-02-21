@@ -1,3 +1,5 @@
+
+
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <opencv2/opencv.hpp>
@@ -49,7 +51,6 @@ private:
 	image_transport::Publisher top_view_pub_;
 	image_transport::Publisher top_view_rotated_pub_;
 	image_transport::Publisher depth_pub_;
-	image_transport::Publisher depth_pub2_;
 	ros::Subscriber disp_image_sub_;
 	void disparityCallback(const stereo_msgs::DisparityImage::ConstPtr& disp_image_msg);
 	
@@ -63,7 +64,6 @@ ObstableDetectorCls::ObstableDetectorCls() : it_(nh_)
 	top_view_pub_ = it_.advertise("stereo/top_view", 1);
 	top_view_rotated_pub_ = it_.advertise("stereo/top_view_rotated", 1);
 	depth_pub_ = it_.advertise("stereo/depth", 1);
-	depth_pub2_ = it_.advertise("stereo/depth2", 1);
 }
 
 void ObstableDetectorCls::disparityCallback(
@@ -77,9 +77,7 @@ void ObstableDetectorCls::disparityCallback(
 	ROS_INFO("Disparity image converted.");	
 	ROS_INFO("Image size %dx%d", disp_image.cols, disp_image.rows);
 	// Top view grayscale image
-	cv::Mat depth_image(disp_image.rows, disp_image.cols, CV_32FC1, cv::Scalar(0));
-	// Top view grayscale image, only part that will be converted to top view (a middle slice)
-	cv::Mat depth_image2(disp_image.rows, disp_image.cols, CV_32FC1, cv::Scalar(0));
+	cv::Mat depth_image(disp_image.rows, disp_image.cols, CV_32FC1, cv::Scalar(0));	
 	cv::Mat top_view_image(64, 64, CV_32FC1, cv::Scalar(0));
 	float xk = (float)disp_image.cols / (float)64;
 	float yk = (float)disp_image.rows / (float)64;
@@ -92,21 +90,20 @@ void ObstableDetectorCls::disparityCallback(
 		float jj = (j - depth_image.rows / 2.0f) / (depth_image.rows / 2.0f);
 		for (int i = 0; i < depth_image.cols; i++)
 		{
-			float d = 1.0f / disp_image.at<float>(j, i);
-			depth_image.at<float>(j, i) = d;
 			if (j < depth_image.rows * HEIGHT_CENTER)
 			{
-				depth_image2.at<float>(j, i) = 0;
+				depth_image.at<float>(j, i) = 0;
 			}
 			else 
 			{								
 				if (disp_image.at<float>(j, i) / jj > PLANE_RATIO)
 				{
-					depth_image2.at<float>(j, i) = d;
+					float d = 1.0f / disp_image.at<float>(j, i);
+					depth_image.at<float>(j, i) = d;
 					int y = (int)(d*dk);
 					if (y < 0) y = 0;
 					if (y > top_view_image.cols - 1) y = top_view_image.cols - 1;
-					int x = (int)((depth_image2.cols / 2 - i) / xk + top_view_image.cols / 2);
+					int x = (int)((depth_image.cols / 2 - i) / xk + top_view_image.cols / 2);
 					if (x < 0) x = 0;
 					if (x > top_view_image.cols - 1) x = top_view_image.cols - 1;
 					
@@ -114,7 +111,7 @@ void ObstableDetectorCls::disparityCallback(
 				} 
 				else 
 				{
-					depth_image2.at<float>(j, i) = 0;
+					depth_image.at<float>(j, i) = 0;
 				}
 			}
 		}
@@ -130,7 +127,6 @@ void ObstableDetectorCls::disparityCallback(
 	//Top view image
 	cv::Mat top_mono_image;
 	cv::Mat depth_mono_image;
-	cv::Mat depth_mono_image2;
 	//cvtColor(top_view_image, top_rgb_image, CV_GRAY2BGR );
 	depthToCV8UC1(top_view_image, top_mono_image);
 	cv_bridge::CvImage cv_top_view_ptr(header, enc::MONO8, top_mono_image);
@@ -147,11 +143,6 @@ void ObstableDetectorCls::disparityCallback(
 	depthToCV8UC1(depth_image, depth_mono_image);
 	cv_bridge::CvImage cv_depth_ptr(header, enc::MONO8, depth_mono_image);	
 	depth_pub_.publish(cv_depth_ptr.toImageMsg());
-	
-	depthToCV8UC1(depth_image2, depth_mono_image2);
-	cv_bridge::CvImage cv_depth_ptr2(header, enc::MONO8, depth_mono_image2);	
-	depth_pub2_.publish(cv_depth_ptr2.toImageMsg());
-	
 	//disp_image.deallocate();
 	//ROS_INFO("Depth image published.");
 }
@@ -162,4 +153,3 @@ int main(int argc, char** argv)
 	ObstableDetectorCls obstable_detector;
 	ros::spin();
 }
-

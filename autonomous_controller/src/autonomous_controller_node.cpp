@@ -107,7 +107,6 @@ void AutonomousControllerCls::topViewImageCallback(
 	cv_bridge::CvImageConstPtr cv_ptr_top = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::MONO8);
 	const cv::Mat top_view_image = cv_ptr_top->image;	
 
-
 	/*for (int j = 0; j < top_view_image.rows; j++)
 	{		
 		float jj = (j - top_view_image.rows / 2.0f) / (top_view_image.rows / 2.0f);
