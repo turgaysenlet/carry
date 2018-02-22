@@ -8,6 +8,11 @@
    args="0 0 -0.04 1.57079632695 3.1415926539 1.57079632695 /camera_link /camera 50" output="screen">
 </node>
 
+<node pkg="tf" type="static_transform_publisher"
+   name="camera_depth_frame"
+   args="0 0 -0.04 1.57079632695 3.1415926539 1.57079632695 /camera_depth_frame /camera 50" output="screen">
+</node>
+
 <node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node" output="screen">
 </node>
 
@@ -34,6 +39,8 @@
 
 <node name="laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" output="screen">
 	<remap from="image" to="/stereo/depth" />
+	<param name="output_frame_id" value="/camera"/>
+	<param name="scan_height" value="100"/>
 </node>
 
 </launch>
