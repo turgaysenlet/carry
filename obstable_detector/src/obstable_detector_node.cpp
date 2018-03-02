@@ -43,9 +43,14 @@ void depthToCV8UC1(const cv::Mat& float_img, cv::Mat& cv8uc1_img){
 void depthToCV16UC1(const cv::Mat& float_img, cv::Mat& cv16uc1_img){
 	//Process images
 	if(cv16uc1_img.rows != float_img.rows || cv16uc1_img.cols != float_img.cols) {
-		cv16uc1_img = cv::Mat(float_img.size(), CV_16UC1);
+		cv16uc1_img = cv::Mat(float_img.rows, float_img.cols, CV_16UC1);
 	}
-	cv::convertScaleAbs(float_img, cv16uc1_img, 100, 0.0);
+	
+	//cv::convertScaleAbs(float_img, cv16uc1_img, 100.0, 0.0);
+	
+	float_img.convertTo(cv16uc1_img, CV_16U, 8192.0, 0);
+	
+	
 	//The following doesn't work due to NaNs
 	//double minVal, maxVal; 
 	//minMaxLoc(float_img, &minVal, &maxVal);
