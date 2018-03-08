@@ -104,7 +104,7 @@ void JoystickControllerCls::joyCallback(const sensor_msgs::Joy::ConstPtr& joy) {
   motors_message.y = sin(steering_radian) * TurningSpeed + speed;
   motors_message.z = 0;
   
-  ROS_INFO("speed: %0.2f, steering: %0.2f", speed, steering);
+  ROS_INFO("speed: %0.2f, steering: %0.2f", (double)speed, (double)steering);
 
   motors_pub_.publish(motors_message);
   //ROS_INFO("Left: %d, Right %d", (int)motors_message.x, (int)motors_message.y);
