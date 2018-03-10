@@ -21,11 +21,6 @@
 using namespace std;
 using namespace ros::console::levels;
 
-const int HeadServoNo = 2;
-const int SteeringServo1No = 3;
-const int SteeringServo2No = 4;
-const int MotorServoNo = 5;
-
 const float SpeedCenterConstant = 5910.0f;
 const float SpeedConstant = 542.0f;
 const float ForwardSpeedStartConstant = 120.0f;
@@ -236,7 +231,7 @@ void MotorControllerCls::SetSpeed(float speed_mps)
 	}
 
 	desired_speed_final = speed_mps;
-	SetServoPosition(MotorServoNo, target);
+	SetServoPosition(5, target);
 }
 void MotorControllerCls::SetHead(float  head_degree)
 {
@@ -280,7 +275,7 @@ void MotorControllerCls::SetHead(float  head_degree)
 	{
 		target2 += (uint)(head_degree * 1500.0 / MaximumHeadAngle);
 	}
-	SetServoPosition(HeadServoNo, target2);
+	SetServoPosition(2, target2);
 }
 void MotorControllerCls::SetSteering(float steering_degree)
 {
@@ -346,8 +341,8 @@ void MotorControllerCls::SetSteering(float steering_degree)
 	{
 		target4 += (uint)(steering_degree * 1500.0 / MaximumSteeringAngle);
 	}
-	SetServoPosition(SteeringServo1No, target3);
-	SetServoPosition(SteeringServo2No, target4);
+	SetServoPosition(3, target3);
+	SetServoPosition(4, target4);
 }
 
 double MotorControllerCls::CalculateMotorServoPositionFromSpeed(float speed)
@@ -396,7 +391,7 @@ void MotorControllerCls::PerformIgnition()
 		speech_pub_.publish(speech_message);
 
 		ROS_INFO("Performing ignition");
-		int channel0 = MotorServoNo;
+		int channel0 = 5;
 		usleep((int)(IgnitionStep0SleepSeconds * 1000000.0f));
 		ROS_INFO("Performing ignition - Step 1/3");
 		SetServoPosition(channel0, CalculateMotorServoPositionFromSpeed(IgnitionStep1Speed));
