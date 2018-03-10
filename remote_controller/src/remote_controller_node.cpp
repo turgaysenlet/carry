@@ -35,7 +35,7 @@ const float MaximumSteeringAngle = 30.0f;
 /// <summary>
 /// Maximum forward travel speed in meters per second.
 /// </summary>
-const float MaximumForwardSpeed = 1.0f;
+const float MaximumForwardSpeed = 2.0f;
 /// <summary>
 /// Maximum reverse travel speed in meters per second.
 /// </summary>

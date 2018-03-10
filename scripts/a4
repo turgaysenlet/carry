@@ -1,0 +1,2 @@
+echo "rosrun robot_state robot_state_node"
+rosrun robot_state robot_state_node

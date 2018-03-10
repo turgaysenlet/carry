@@ -1,0 +1,2 @@
+echo "rosrun autonomous_controller autonomous_controller_node"
+rosrun autonomous_controller autonomous_controller_node

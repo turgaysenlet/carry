@@ -1,0 +1,6 @@
+rm -f -v /tmp/.X11-unix/X1
+rm -f -v /tmp/.X11-unix/X2
+rm -f -v /tmp/.X11-unix/X3
+rm -f -v /tmp/.X11-unix/X4
+rm -f -v /tmp/.X11-unix/X5
+
