@@ -1,0 +1,13 @@
+<launch>  
+
+<arg name="manager" default="manager" /> <!-- Must be globally qualified -->
+<arg name="viewer" default="true" /> <!-- Must be globally qualified -->
+
+<node name="laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" output="screen">
+	<remap from="image" to="/camera/depth" />
+	<param name="output_frame_id" value="/camera"/>
+	<param name="scan_height" value="100"/>
+</node>
+
+
+</launch>
