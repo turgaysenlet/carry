@@ -264,7 +264,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		int frame_counter_left = (int)recv_data_left[0];
 		int frame_counter_right = (int)recv_data_right[0];
 
-		ROS_INFO("Left: %d, Right: %d", frame_counter_left, frame_counter_right);
+		ROS_INFO("Left count: %d, Right count: %d", frame_counter_left, frame_counter_right);
 		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
 		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
@@ -367,7 +367,7 @@ void SimulatorImageReceiverCls::ReceiveImages()
 		}
 		
 		float send_data[2] = {desired_speed, desired_steering};
-		ROS_WARN("Send speed: %f, sent steer: %f", send_data[0], send_data[1]);		
+		ROS_INFO("Send speed: %f, sent steer: %f", send_data[0], send_data[1]);		
 		sendto(sock_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
 
 		//update joint_state
