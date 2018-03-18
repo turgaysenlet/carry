@@ -1,0 +1,2 @@
+mkdir ~/Bag
+roslaunch ~/catkin_ws/src/carry/launch/record_simulation.launch 

@@ -1,0 +1,9 @@
+<launch> 
+  <node pkg="rosbag" type="record" name="record" output="screen" args="
+   /stereo/right/image_raw
+   /stereo/left/image_raw
+   /stereo/left/camera_info
+   /stereo/right/camera_info
+   -o /home/turgay/Bag/Bag">
+  </node> 
+</launch> 
