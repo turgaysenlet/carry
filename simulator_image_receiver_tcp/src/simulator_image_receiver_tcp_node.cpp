@@ -409,7 +409,7 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "SimulatorImageReceiverTcpTcp");
+	ros::init(argc, argv, "SimulatorImageReceiverTcp");
 	SimulatorImageReceiverTcpCls simulator_image_receiver_tcp;
 	//ros::spin();
 	ros::spinOnce();
