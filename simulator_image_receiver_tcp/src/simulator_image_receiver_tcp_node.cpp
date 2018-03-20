@@ -22,7 +22,8 @@
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 
-// udpserver
+// TCP server
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -44,12 +45,18 @@ const int RIGHT_RECEIVE_PORT = 2001;
 const char* COMMAND_SEND_IP = "10.0.0.108";
 //const char* COMMAND_SEND_IP = "192.168.1.70";
 const int COMMAND_SEND_PORT = 3000;
+const int MAX_BYTES = 131072;
+
+int socket_left;
+int socket_right;
 
 class SimulatorImageReceiverTcpCls
 {
 public:
 	SimulatorImageReceiverTcpCls();
+	~SimulatorImageReceiverTcpCls();
 	void ReceiveImages();
+	int ListenOnSocket(int &sock, int receive_port, sockaddr_in &server_addr);
 private:
 	ros::NodeHandle nh_;
 	image_transport::ImageTransport it_;
@@ -70,7 +77,7 @@ private:
 	void steeringCallback(const motor_controller::steering::ConstPtr& steering);
 	void speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering);
 	bool ServeCameraRequestLeft(sensor_msgs::SetCameraInfo::Request &req, sensor_msgs::SetCameraInfo::Response &res);
-	bool ServeCameraRequestRight(sensor_msgs::SetCameraInfo::Request &req, sensor_msgs::SetCameraInfo::Response &res);
+	bool ServeCameraRequestRight(sensor_msgs::SetCameraInfo::Request &req, sensor_msgs::SetCameraInfo::Response &res);	
 
 	void SetSteering(float steering_degree);
 	void SetSpeed(float speed_mps);
@@ -81,11 +88,29 @@ private:
 	float desired_speed;
 	float desired_steering;
 
-	int Width;
-	int Height;
+	int width;
+	int height;
+
 	camera_info_manager::CameraInfoManager camera_info_manager_left_;
 	camera_info_manager::CameraInfoManager camera_info_manager_right_;
+
 };
+
+SimulatorImageReceiverTcpCls::~SimulatorImageReceiverTcpCls() {
+	ROS_INFO("SimulatorImageReceiverTcpCls cleaning up");
+	if (socket_left != 0) {
+		ROS_INFO("SimulatorImageReceiverTcpCls closing left socket...");		
+		shutdown(socket_left, 2);
+		close(socket_left);
+		ROS_INFO("SimulatorImageReceiverTcpCls closing left socket done.");
+	}
+	if (socket_right != 0) {
+		ROS_INFO("SimulatorImageReceiverTcpCls closing right socket...");
+		shutdown(socket_right, 2);
+		close(socket_right);
+		ROS_INFO("SimulatorImageReceiverTcpCls closing right socket done.");
+	}	
+}
 
 SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_info_manager_left_(nh_, "left_simulation", ""), camera_info_manager_right_(nh_, "right_simulation", "")
 {
@@ -99,8 +124,8 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/right400.yaml");
 
 	//ROS_INFO("Camera Info Load Result: %d", (int)result);
-	Width = 0;
-	Height = 0;
+	width = 0;
+	height = 0;
 
 	speed_sub_ = nh_.subscribe < motor_controller::speed > ("motor_controller/speed_control", 1, &SimulatorImageReceiverTcpCls::speedCallback, this);
 	steering_sub_ = nh_.subscribe < motor_controller::steering > ("motor_controller/steering_control", 1, &SimulatorImageReceiverTcpCls::steeringCallback, this);
@@ -117,8 +142,61 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	left_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/left/camera_info", 1, false);
 	right_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/right/camera_info", 1, false);
 	service_left_ = nh_.advertiseService("/stereo/left/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestLeft, this);
-	service_right_ = nh_.advertiseService("/stereo/right/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestRight, this);
+	service_right_ = nh_.advertiseService("/stereo/right/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestRight, this);	
 }
+
+int SimulatorImageReceiverTcpCls::ListenOnSocket(int &sock, int receive_port, sockaddr_in &server_addr) {
+	ROS_INFO("SimulatorImageReceiverTcpCls::ListenOnSocket for port %d...", receive_port);
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	// Check to see if we have a valid socket
+	if(sock < 0) {
+   		int iSocketError = 0;//WSAGetLastError();
+   		ROS_ERROR("SimulatorImageReceiverTcpCls::ListenOnSocket create socket failed with %d", iSocketError);
+   		exit(1);
+	}
+	fcntl(sock, F_SETFL, (~O_NONBLOCK)); 
+
+	memset(&server_addr, 0, sizeof(sockaddr_in));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(receive_port);
+	server_addr.sin_addr.s_addr = INADDR_ANY;
+	bzero(&(server_addr.sin_zero), 8);
+
+	// Bind socket
+	if (bind(sock,(sockaddr *)&server_addr, sizeof(sockaddr)) < -1)
+	{
+   		int iSocketError = 0;//WSAGetLastError();
+		ROS_ERROR("SimulatorImageReceiverTcpCls::ListenOnSocket bind socket failed with %d", iSocketError);
+		exit(1);
+	}
+
+	// Listen for incoming connections
+	if(listen(sock, 1) < 0) {
+	   int iSocketError = 0;//WSAGetLastError();
+   		ROS_ERROR("SimulatorImageReceiverTcpCls::ListenOnSocket listen socket failed with %d", iSocketError);
+		exit(1);
+	}
+
+	// Accept incoming connection request
+	sockaddr_in sIncomingAddr;
+	memset(&sIncomingAddr, 0, sizeof(sockaddr_in));
+	unsigned int iAddrLen = sizeof(sockaddr_in);
+	int sIncomingSocket = accept(sock, (sockaddr *) &sIncomingAddr, &iAddrLen);
+	if(sIncomingSocket < 0) {
+   		int iSocketError = 0;//WSAGetLastError();
+   		ROS_WARN("SimulatorImageReceiverTcpCls::ListenOnSocket accept socket failed with %d", iSocketError);
+   		// Return false, but we can continue accepting in a polling loop until a connection request comes.
+   		return -1;
+	} else {
+		ROS_INFO("SimulatorImageReceiverTcpCls::ListenOnSocket accept socket connection with socket %d from %s port %d",
+            sIncomingSocket, inet_ntoa(sIncomingAddr.sin_addr), ntohs(sIncomingAddr.sin_port));
+	}
+
+	ROS_INFO("SimulatorImageReceiverTcpCls::ListenOnSocket for port %d done.", receive_port);
+	return sIncomingSocket;
+}
+
 
 bool SimulatorImageReceiverTcpCls::ServeCameraRequestLeft(sensor_msgs::SetCameraInfo::Request &req,
 		sensor_msgs::SetCameraInfo::Response &res)
@@ -173,74 +251,17 @@ void SimulatorImageReceiverTcpCls::Stop()
 }
 
 void SimulatorImageReceiverTcpCls::ReceiveImages()
-{
-	int sock_left;
-	int sock_right;
-	int sock_command_sender;
+{	
+	int socket_command_sender;
 	unsigned int addr_len;
 	int bytes_read_left, bytes_read_right;
-	unsigned char recv_data_left[65536] = {0};
-	unsigned char recv_data_right[65536] = {0};
-	sockaddr_in server_addr_left;
-	sockaddr_in server_addr_right;
+	unsigned char recv_data_left[MAX_BYTES+1] = {0};
+	unsigned char recv_data_right[MAX_BYTES+1] = {0};
 	sockaddr_in client_addr;
 	sockaddr_in client_addr_command;
 
-	// Left UDP receiver
-	if ((sock_left = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		ROS_ERROR("Socket creation problem");
-		exit(1);
-	}
-	fcntl(sock_left, F_SETFL, O_NONBLOCK); 
-
-	server_addr_left.sin_family = AF_INET;
-	server_addr_left.sin_port = htons(LEFT_RECEIVE_PORT);
-	server_addr_left.sin_addr.s_addr = INADDR_ANY;
-	bzero(&(server_addr_left.sin_zero),8);
-
-	if (bind(sock_left,(sockaddr *)&server_addr_left,
-			sizeof(sockaddr)) == -1)
-	{
-		ROS_ERROR("Socket binding problem");
-		exit(1);
-	}
-	////////////////////
-	// Right UDP receiver
-	if ((sock_right = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		ROS_ERROR("Socket creation problem");
-		exit(1);
-	}
-	fcntl(sock_right, F_SETFL, O_NONBLOCK); 
-	
-	server_addr_right.sin_family = AF_INET;
-	server_addr_right.sin_port = htons(RIGHT_RECEIVE_PORT);
-	server_addr_right.sin_addr.s_addr = INADDR_ANY;
-	bzero(&(server_addr_right.sin_zero),8);
-
-	if (bind(sock_right,(sockaddr *)&server_addr_right,
-			sizeof(sockaddr)) == -1)
-	{
-		ROS_ERROR("Socket binding problem");
-		exit(1);
-	}
-	////////////////////
-	// UDP command sender
-	if ((sock_command_sender = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		ROS_ERROR("Socket creation problem");
-		exit(1);
-	}
-	hostent *host;
-	host = (hostent *) gethostbyname((char *)COMMAND_SEND_IP);
-	client_addr_command.sin_family = AF_INET;
-	client_addr_command.sin_port = htons(COMMAND_SEND_PORT);
-	client_addr_command.sin_addr = *((in_addr *)host->h_addr);
-	bzero(&(client_addr_command.sin_zero),8);
-
 	///////////////
 	addr_len = sizeof(sockaddr);
-
-	ROS_INFO("UDP Server waiting for client on port %d", htons(server_addr_left.sin_port));
-	ROS_INFO("UDP Server waiting for client on port %d", htons(server_addr_right.sin_port));
 
 	ros::Rate loop_rate(15);
 	// message declarations
@@ -255,23 +276,25 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 	cv::Mat image_right;
 	while (ros::ok())
 	{
-		if (keep_old_left == false)
+		//if (keep_old_left == false)
 		{
-			bytes_read_left = recvfrom(sock_left, recv_data_left, 65535, 0, (sockaddr *)&client_addr, &addr_len);
+			//bytes_read_left = recvfrom(socket_left, recv_data_left, MAX_BYTES, 0, (sockaddr *)&client_addr, &addr_len);
+			bytes_read_left = recv(socket_left, recv_data_left, MAX_BYTES, 0);
 		}
-		if (keep_old_right == false)
+		//if (keep_old_right == false)
 		{
-			bytes_read_right = recvfrom(sock_right, recv_data_right, 65535, 0, (sockaddr *)&client_addr, &addr_len);
+			bytes_read_right = recv(socket_right, recv_data_right, MAX_BYTES, 0);
 		}
 
 		int frame_counter_left = (int)recv_data_left[0];
 		int frame_counter_right = (int)recv_data_right[0];
 
-		ROS_INFO("Left count: %d, Right count: %d", frame_counter_left, frame_counter_right);
-		ROS_INFO("Left bytes: %d, Right bytes: %d", bytes_read_left, bytes_read_right);
+		ROS_INFO("SimulatorImageReceiverTcpCls::ReceiveImages Left count: %d, Right count: %d, Left bytes: %d, Right bytes: %d", frame_counter_left, frame_counter_right, bytes_read_left, bytes_read_right);
+		
 		if (bytes_read_left > 0 && bytes_read_right > 0)
 		{
-			/*FILE* fl = fopen("/tmp/left.jpg","wb");
+			/*
+			FILE* fl = fopen("/tmp/left.jpg","wb");
 			fwrite(recv_data_left, sizeof(char), bytes_read_left, fl);
 			fclose(fl);
 
@@ -282,6 +305,7 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			image_left = cv::imread("/tmp/left.jpg", 1);
 			image_right = cv::imread("/tmp/right.jpg", 1);
 			*/
+
 			std::vector<char> data_left(recv_data_left, recv_data_left + bytes_read_left);
 			std::vector<char> data_right(recv_data_right, recv_data_right + bytes_read_right);
 			image_left = cv::imdecode(data_left, -1);
@@ -293,13 +317,13 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			{
 				if (frame_counter_left > frame_counter_right)
 				{
-					ROS_WARN("Frame counters not match, keeping left. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
+					ROS_WARN("SimulatorImageReceiverTcpCls::ReceiveImages Frame counters not match, keeping left. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
 					keep_old_right = false;
 					keep_old_left = true;
 				}
 				else
 				{
-					ROS_WARN("Frame counters not match, keeping right. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
+					ROS_WARN("SimulatorImageReceiverTcpCls::ReceiveImagesFrame counters not match, keeping right. Global: %d, Left: %d, Right: %d", frame_counter, frame_counter_left, frame_counter_right);
 					keep_old_right = true;
 					keep_old_left = false;
 				}
@@ -313,15 +337,15 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 
 			if (image_left.cols != image_right.cols || image_left.rows != image_right.rows)
 			{
-				ROS_WARN("Image sizes not match. Left: %dx%d, Right: %dx%d", image_left.cols, image_left.rows, image_right.cols, image_right.rows);
+				ROS_WARN("SimulatorImageReceiverTcpCls::ReceiveImages Image sizes not match. Left: %dx%d, Right: %dx%d", image_left.cols, image_left.rows, image_right.cols, image_right.rows);
 				continue;
 			}
 
-			if (Width != image_left.cols || Height != image_left.rows)
+			if (width != image_left.cols || height != image_left.rows)
 			{
-				Width = image_left.cols;
-				Height = image_left.rows;
-				ROS_INFO("New image resolution: %dx%d", Width, Height);
+				width = image_left.cols;
+				height = image_left.rows;
+				ROS_INFO("SimulatorImageReceiverTcpCls::ReceiveImages New image resolution: %dx%d", width, height);
 			}
 
 			//ROS_INFO("Left");
@@ -330,6 +354,7 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			sensor_msgs::Image image_message_left;
 			cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
 			cvimage_left.toImageMsg(image_message_left);
+
 			//ROS_INFO("Right");
 			sensor_msgs::Image image_message_right;
 			cv_bridge::CvImage cvimage_right(header, enc::BGR8, image_right);
@@ -366,12 +391,12 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 		}
 		else
 		{
-			ROS_WARN("Image bytes don't match skipping. Left: %d, Right: %d", bytes_read_left, bytes_read_right);
+			ROS_WARN("SimulatorImageReceiverTcpCls::ReceiveImages Image bytes don't match skipping. Left: %d, Right: %d", bytes_read_left, bytes_read_right);
 		}
 		
 		float send_data[2] = {desired_speed, desired_steering};
-		ROS_INFO("Send speed: %f, sent steer: %f", send_data[0], send_data[1]);		
-		sendto(sock_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
+		ROS_INFO("SimulatorImageReceiverTcpCls::ReceiveImages Send speed: %f, sent steer: %f", send_data[0], send_data[1]);		
+		sendto(socket_command_sender, (void*)send_data, sizeof(send_data), 0, (sockaddr *)&client_addr_command, sizeof(sockaddr));
 
 		//update joint_state
 		//update joint_state
@@ -402,9 +427,9 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 		// This will adjust as needed per iteration
 		loop_rate.sleep();
 	}
-	close (sock_left);
-	close (sock_right);
-	close (sock_command_sender);
+	close (socket_left);
+	close (socket_right);
+	close (socket_command_sender);
 }
 
 int main(int argc, char** argv)
@@ -413,6 +438,25 @@ int main(int argc, char** argv)
 	SimulatorImageReceiverTcpCls simulator_image_receiver_tcp;
 	//ros::spin();
 	ros::spinOnce();
+	int socket_left_server;
+	int socket_right_server;
+	sockaddr_in receive_left;
+	sockaddr_in receive_right;
+	memset(&receive_left, sizeof(sockaddr_in), 0);
+	memset(&receive_right, sizeof(sockaddr_in), 0);
+	socket_left = simulator_image_receiver_tcp.ListenOnSocket(socket_left_server, LEFT_RECEIVE_PORT, receive_left);
+	socket_right = simulator_image_receiver_tcp.ListenOnSocket(socket_right_server, RIGHT_RECEIVE_PORT, receive_right);
+	ROS_INFO("socket_left: %d, socket_right: %d", socket_left, socket_right);
+
+	// unsigned char recv_data_left[MAX_BYTES+1] = {0};
+	// while (ros::ok()) {
+	// 	bytes_read_left = read(socket_left2, recv_data_left, 100);
+	// 	int x = recv(socket_left2, recv_data_left, 100, 0);
+	// 	if (bytes_read_left > 0) {
+	// 		ROS_INFO("bytes_read_left: %d %d", bytes_read_left, x);
+	// 	}
+	// }
 	simulator_image_receiver_tcp.ReceiveImages();
+	exit(0);
 }
 
