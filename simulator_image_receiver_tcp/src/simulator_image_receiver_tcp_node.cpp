@@ -93,7 +93,6 @@ private:
 
 	camera_info_manager::CameraInfoManager camera_info_manager_left_;
 	camera_info_manager::CameraInfoManager camera_info_manager_right_;
-
 };
 
 SimulatorImageReceiverTcpCls::~SimulatorImageReceiverTcpCls() {
