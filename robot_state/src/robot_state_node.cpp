@@ -15,9 +15,9 @@
 using namespace std;
 
 //PS3 controller
-const int JoyStopStateButtonNo = 14; // X Button
+const int JoyStopStateButtonNo = 15; // Square Button
 const int JoyAutonomousStateButtonNo = 12; // Triangle Button
-const int JoyRemoteStateButtonNo = 15; // Square Button
+const int JoyRemoteStateButtonNo = 14; // X Button
 const int JoyFollowSidewalkStateButtonNo = 13; // O Button
 
 //const int JoyStopStateButtonNo = 2; // Button 3
