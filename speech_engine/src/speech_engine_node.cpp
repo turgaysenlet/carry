@@ -12,6 +12,8 @@
 
 using namespace std;
 
+const int BUFFER_MS = 300;
+
 class SpeechEngineCls
 {
 public:
@@ -28,7 +30,7 @@ private:
 SpeechEngineCls::SpeechEngineCls()
 {
 	int options = 0;
-	int result = espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, 10, NULL, options);
+	int result = espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, BUFFER_MS, NULL, options);
 	printf("Speech initialization result: %d\n", result);
 	unsigned int uid = 0;
 	espeak_Synth("Ready", 5, 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
