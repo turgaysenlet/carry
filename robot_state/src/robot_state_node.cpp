@@ -15,15 +15,15 @@
 using namespace std;
 
 //PS3 controller
-//const int JoyStopStateButtonNo = 14; // X Button
-//const int JoyAutonomousStateButtonNo = 12; // Triangle Button
-//const int JoyRemoteStateButtonNo = 15; // Square Button
-//const int JoyFollowSidewalkStateButtonNo = 13; // O Button
+const int JoyStopStateButtonNo = 14; // X Button
+const int JoyAutonomousStateButtonNo = 12; // Triangle Button
+const int JoyRemoteStateButtonNo = 15; // Square Button
+const int JoyFollowSidewalkStateButtonNo = 13; // O Button
 
-const int JoyStopStateButtonNo = 2; // Button 3
-const int JoyAutonomousStateButtonNo = 3; // Button 4
-const int JoyRemoteStateButtonNo = 4; // Button 5
-const int JoyFollowSidewalkStateButtonNo = 5; // Button 6
+//const int JoyStopStateButtonNo = 2; // Button 3
+//const int JoyAutonomousStateButtonNo = 3; // Button 4
+//const int JoyRemoteStateButtonNo = 4; // Button 5
+//const int JoyFollowSidewalkStateButtonNo = 5; // Button 6
 
 string StateName(int state)
 {
