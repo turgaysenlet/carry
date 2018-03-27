@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const int BUFFER_MS = 300;
+const int BUFFER_MS = 5000;
 
 class SpeechEngineCls
 {
@@ -25,15 +25,20 @@ private:
 	ros::NodeHandle nh_;
 
 	ros::Subscriber speech_sub_;
+	const unsigned int flags = espeakCHARS_8BIT | espeakENDPAUSE;
 };
 
 SpeechEngineCls::SpeechEngineCls()
 {
 	int options = 0;
-	int result = espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, BUFFER_MS, NULL, options);
+	void* user_data;
+	char *path=NULL;
+	int result = espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, BUFFER_MS, path, options);
 	printf("Speech initialization result: %d\n", result);
 	unsigned int uid = 0;
-	espeak_Synth("Ready", 5, 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
+	//espeak_Synth("Ready", 5, 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
+	espeak_Synth("Ready", 10, 0, POS_SENTENCE, 0, flags, &uid, user_data);
+
 	printf("Speech UID: %d\n", (int)uid);
 	//nh_.param("axis_linear", linear_, linear_);
 	//nh_.param("axis_angular", angular_, angular_);
@@ -45,7 +50,7 @@ SpeechEngineCls::SpeechEngineCls()
 void SpeechEngineCls::speechRequestCallback(const speech_engine::speech_request::ConstPtr& speech_request)
 {
 	unsigned int uid = 0;
-	espeak_Synth(speech_request->speech_request.c_str(), speech_request->speech_request.size(), 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
+	espeak_Synth(speech_request->speech_request.c_str(), speech_request->speech_request.size(), 0, POS_SENTENCE, 0, flags, &uid, NULL);
 	ROS_INFO("Speaking: \"%s\"", speech_request->speech_request.c_str());
 }
 
