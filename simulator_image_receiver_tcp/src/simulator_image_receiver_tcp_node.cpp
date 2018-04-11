@@ -119,8 +119,8 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	//camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/left.yaml");	
 	//camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/right.yaml");
 
-	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/simulator_left_640_400.yaml");	
-	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/simulator_right_640_400.yaml");
+	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver_tcp/camera_info/simulator_left_640_400.yaml");	
+	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver_tcp/camera_info/simulator_right_640_400.yaml");
 
 	//ROS_INFO("Camera Info Load Result: %d", (int)result);
 	width = 0;
@@ -359,7 +359,7 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			if (image_left.cols != image_right.cols || image_left.rows != image_right.rows)
 			{
 				ROS_WARN("Image sizes not match. Left: %dx%d, Right: %dx%d", image_left.cols, image_left.rows, image_right.cols, image_right.rows);
-				continue;
+				//continue;
 			}
 
 			if (width != image_left.cols || height != image_left.rows)
