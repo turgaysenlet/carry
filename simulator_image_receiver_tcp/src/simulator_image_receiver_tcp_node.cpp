@@ -372,6 +372,7 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			//ROS_INFO("Left");
 			std_msgs::Header header;
 			header.seq = frame_counter;
+			header.frame_id = "camera";
 			sensor_msgs::Image image_message_left;
 			cv_bridge::CvImage cvimage_left(header, enc::BGR8, image_left);
 			cvimage_left.toImageMsg(image_message_left);
