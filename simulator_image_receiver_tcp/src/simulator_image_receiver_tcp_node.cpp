@@ -119,8 +119,8 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	//camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/left.yaml");	
 	//camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/right.yaml");
 
-	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/left400.yaml");	
-	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/right400.yaml");
+	camera_info_manager_left_.loadCameraInfo("package://simulator_image_receiver/camera_info/simulator_left_640_400.yaml");	
+	camera_info_manager_right_.loadCameraInfo("package://simulator_image_receiver/camera_info/simulator_right_640_400.yaml");
 
 	//ROS_INFO("Camera Info Load Result: %d", (int)result);
 	width = 0;
