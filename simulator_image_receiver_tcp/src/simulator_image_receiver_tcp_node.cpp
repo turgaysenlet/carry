@@ -40,6 +40,7 @@ using namespace ros::console::levels;
 namespace enc = sensor_msgs::image_encodings;
 
 bool ProcessStereo = false;
+bool PublishLeftAsDepth = true;
 const int LEFT_RECEIVE_PORT = 2000;
 const int RIGHT_RECEIVE_PORT = 2001;
 const char* COMMAND_SEND_IP = "10.0.0.108";
@@ -65,9 +66,11 @@ private:
 	ros::Subscriber speed_steering_sub_;
 	image_transport::Publisher left_raw_pub_;
 	image_transport::Publisher right_raw_pub_;
+	image_transport::Publisher depth_pub_;
 	image_transport::Publisher disparity_pub_;
 	ros::Publisher left_info_pub_;
 	ros::Publisher right_info_pub_;
+	ros::Publisher depth_info_pub_;
 	ros::ServiceServer service_left_;
 	ros::ServiceServer service_right_;
 	ros::Publisher joint_pub_;
@@ -131,6 +134,7 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	speed_steering_sub_ = nh_.subscribe < motor_controller::speed_steering > ("motor_controller/speed_steering_control", 1, &SimulatorImageReceiverTcpCls::speedSteeringCallback, this);
 	left_raw_pub_ = it_.advertise("/stereo/left/image_raw", 1, false);
 	right_raw_pub_ = it_.advertise("/stereo/right/image_raw", 1, false);
+	depth_pub_ = it_.advertise("/stereo/depth/image_raw", 1, false);
 	joint_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
 
 	if (ProcessStereo)
@@ -140,6 +144,8 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 
 	left_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/left/camera_info", 1, false);
 	right_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/right/camera_info", 1, false);
+	depth_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/depth/camera_info", 1, false);
+
 	service_left_ = nh_.advertiseService("/stereo/left/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestLeft, this);
 	service_right_ = nh_.advertiseService("/stereo/right/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestRight, this);	
 }
@@ -401,6 +407,21 @@ void SimulatorImageReceiverTcpCls::ReceiveImages()
 			right_raw_pub_.publish(image_message_right);
 			right_info_pub_.publish(camera_info_manager_right_.getCameraInfo());
 
+
+			if (PublishLeftAsDepth)
+			{
+				sensor_msgs::Image image_message_depth;
+
+				cv::Mat image_depth;
+				cvtColor(image_left, image_depth, cv::COLOR_RGB2GRAY);
+				image_depth.convertTo(image_depth, CV_16U, 1, 0);
+
+				cv_bridge::CvImage cvimage_depth(header, enc::TYPE_16UC1, 100*image_depth);
+				cvimage_depth.toImageMsg(image_message_depth);
+
+				depth_pub_.publish(image_message_depth);
+				depth_info_pub_.publish(camera_info_manager_left_.getCameraInfo());
+			}
 			if (ProcessStereo)
 			{
 				disparity_pub_.publish(image_message_disp);
