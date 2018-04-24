@@ -43,6 +43,9 @@ const int CAMERA_RECEIVE_PORT = 2000;
 const int ODOM_RECEIVE_PORT = 2500;
 const int COMMAND_SEND_PORT = 3000;
 const int MAX_BYTES = 262143;
+// Convert depth image coming from simulator into actual depth in meters.
+// Assumes 0.01 depth scale on simulator side.
+const float DEPTH_CONSTANT = 40.0f;
 
 struct OdomMessage {
 	int OdomSequence;
@@ -59,13 +62,15 @@ struct OdomMessage {
 	float Time;
 };
 
-class SimulatorImageReceiverTcpCls
+class SimulatorStereoReceiverTcpCls
 {
 public:
-	SimulatorImageReceiverTcpCls();
-	~SimulatorImageReceiverTcpCls();
+	SimulatorStereoReceiverTcpCls();
+	~SimulatorStereoReceiverTcpCls();
 	void ReceiveImage();
 	void ReceiveOdom();
+	void SendImage();
+	void SendDepth();
 	void Loop();
 	void ListenOnOdomUdpSocket();
 	void ListenOnCameraTcpSocket();
@@ -103,7 +108,7 @@ private:
 	int height;
 
 	camera_info_manager::CameraInfoManager camera_info_manager_image_;
-	cv::Mat image;
+	cv::Mat image_depth_right;
 	bool first_image;
 	int camera_socket;
 	int odom_socket;
@@ -112,9 +117,10 @@ private:
 	int bytes_read_odom;
 	int frame_counter;
 	OdomMessage odom_message;
+	sensor_msgs::CameraInfo camera_info;
 };
 
-SimulatorImageReceiverTcpCls::~SimulatorImageReceiverTcpCls() {
+SimulatorStereoReceiverTcpCls::~SimulatorStereoReceiverTcpCls() {
 	ROS_INFO("cleaning up");
 	if (recv_data_image != NULL) 
 	{
@@ -134,7 +140,7 @@ SimulatorImageReceiverTcpCls::~SimulatorImageReceiverTcpCls() {
 	}
 }
 
-SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_info_manager_image_(nh_, "image_simulation", "")
+SimulatorStereoReceiverTcpCls::SimulatorStereoReceiverTcpCls() : it_(nh_), camera_info_manager_image_(nh_, "image_simulation", "")
 {	
 	recv_data_image = new unsigned char[MAX_BYTES+1];
 	desired_speed = 0;
@@ -148,11 +154,11 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	height = 0;
 
 	// We need an initial RGB image in case first receive does not succeed.
-	image = cv::Mat(400, 1280, CV_8UC3);
+	image_depth_right = cv::Mat(400, 1280, CV_8UC3);
 
-	speed_sub_ = nh_.subscribe < motor_controller::speed > ("motor_controller/speed_control", 1, &SimulatorImageReceiverTcpCls::speedCallback, this);
-	steering_sub_ = nh_.subscribe < motor_controller::steering > ("motor_controller/steering_control", 1, &SimulatorImageReceiverTcpCls::steeringCallback, this);
-	speed_steering_sub_ = nh_.subscribe < motor_controller::speed_steering > ("motor_controller/speed_steering_control", 1, &SimulatorImageReceiverTcpCls::speedSteeringCallback, this);
+	speed_sub_ = nh_.subscribe < motor_controller::speed > ("motor_controller/speed_control", 1, &SimulatorStereoReceiverTcpCls::speedCallback, this);
+	steering_sub_ = nh_.subscribe < motor_controller::steering > ("motor_controller/steering_control", 1, &SimulatorStereoReceiverTcpCls::steeringCallback, this);
+	speed_steering_sub_ = nh_.subscribe < motor_controller::speed_steering > ("motor_controller/speed_steering_control", 1, &SimulatorStereoReceiverTcpCls::speedSteeringCallback, this);
 	image_raw_pub_ = it_.advertise("/stereo/image/image_raw", 1, false);
 	depth_pub_ = it_.advertise("/stereo/depth/image_raw", 1, false);
 	joint_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
@@ -160,11 +166,11 @@ SimulatorImageReceiverTcpCls::SimulatorImageReceiverTcpCls() : it_(nh_), camera_
 	image_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/image/camera_info", 1, false);
 	depth_info_pub_ = nh_.advertise<sensor_msgs::CameraInfo>("/stereo/depth/camera_info", 1, false);
 
-	service_image_ = nh_.advertiseService("/stereo/image/set_camera_info", &SimulatorImageReceiverTcpCls::ServeCameraRequestLeft, this);
+	service_image_ = nh_.advertiseService("/stereo/image/set_camera_info", &SimulatorStereoReceiverTcpCls::ServeCameraRequestLeft, this);
 	now = ros::Time::now();
 }
 
-void SimulatorImageReceiverTcpCls::ListenOnOdomUdpSocket() {
+void SimulatorStereoReceiverTcpCls::ListenOnOdomUdpSocket() {
 	unsigned int addr_len;
 	sockaddr_in server_addr_odom;
 	sockaddr_in client_addr;
@@ -189,7 +195,7 @@ void SimulatorImageReceiverTcpCls::ListenOnOdomUdpSocket() {
 	}
 
 }
-void SimulatorImageReceiverTcpCls::ListenOnCameraTcpSocket() {
+void SimulatorStereoReceiverTcpCls::ListenOnCameraTcpSocket() {
 	int receive_port = CAMERA_RECEIVE_PORT;
 	int sock;
 	sockaddr_in server_addr;
@@ -248,52 +254,52 @@ void SimulatorImageReceiverTcpCls::ListenOnCameraTcpSocket() {
 }
 
 
-bool SimulatorImageReceiverTcpCls::ServeCameraRequestLeft(sensor_msgs::SetCameraInfo::Request &req,
+bool SimulatorStereoReceiverTcpCls::ServeCameraRequestLeft(sensor_msgs::SetCameraInfo::Request &req,
 		sensor_msgs::SetCameraInfo::Response &res)
 {
 	res.success = 1;
 	return true;
 }
 
-void SimulatorImageReceiverTcpCls::speedCallback(const motor_controller::speed::ConstPtr& speed)
+void SimulatorStereoReceiverTcpCls::speedCallback(const motor_controller::speed::ConstPtr& speed)
 {
 	SetSpeed(speed->speed_mps);
 }
 
-void SimulatorImageReceiverTcpCls::steeringCallback(const motor_controller::steering::ConstPtr& steering)
+void SimulatorStereoReceiverTcpCls::steeringCallback(const motor_controller::steering::ConstPtr& steering)
 {
 	SetSteering(steering->degree);
 }
 
-void SimulatorImageReceiverTcpCls::speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering)
+void SimulatorStereoReceiverTcpCls::speedSteeringCallback(const motor_controller::speed_steering::ConstPtr& speed_steering)
 {
 	ROS_WARN("Received request: %f, %f", speed_steering->speed_mps.speed_mps, speed_steering->steering_degree.degree);
 	SetSpeed(speed_steering->speed_mps.speed_mps);
 	SetSteering(speed_steering->steering_degree.degree);
 }
 
-void SimulatorImageReceiverTcpCls::SetSpeed(float speed_mps)
+void SimulatorStereoReceiverTcpCls::SetSpeed(float speed_mps)
 {
 	desired_speed = speed_mps;
 }
 
-void SimulatorImageReceiverTcpCls::SetSteering(float steering_degree)
+void SimulatorStereoReceiverTcpCls::SetSteering(float steering_degree)
 {
 	desired_steering = steering_degree;
 }
 
-void SimulatorImageReceiverTcpCls::PerformIgnition()
+void SimulatorStereoReceiverTcpCls::PerformIgnition()
 {
 	// Nothing
 }
 
-void SimulatorImageReceiverTcpCls::Stop()
+void SimulatorStereoReceiverTcpCls::Stop()
 {
 	SetSpeed(0);
 	SetSteering(0);
 }
 
-void SimulatorImageReceiverTcpCls::ReceiveImage() 
+void SimulatorStereoReceiverTcpCls::ReceiveImage() 
 {
 	// Set contents to zero
 	memset(recv_data_image, 0, MAX_BYTES+1);
@@ -304,39 +310,40 @@ void SimulatorImageReceiverTcpCls::ReceiveImage()
 	int size_image = *((int*)(recv_data_image+4));	
 
 	if (bytes_read_image != size_image || size_image == 0) {
-		ROS_WARN("Leftcount: %d, Leftbytes: %d/%d", (int)frame_counter, bytes_read_image, size_image);
+		ROS_WARN("Image count: %d, image bytes: %d/%d", (int)frame_counter, bytes_read_image, size_image);
 		return;
 	}
-	ROS_INFO("Leftcount: %d, Leftbytes: %d/%d", (int)frame_counter, bytes_read_image, size_image);
+	ROS_INFO("Image count: %d, image bytes: %d/%d", (int)frame_counter, bytes_read_image, size_image);
 
 	/*
 	FILE* fl = fopen("/tmp/image.jpg","wb");
 	fwrite(recv_data_image, sizeof(char), bytes_read_image, fl);
 	fclose(fl);
 
-	image = cv::imread("/tmp/image.jpg", 1);
+	image_depth_right = cv::imread("/tmp/image.jpg", 1);
 	*/
 
 	if (first_image || (size_image > 0 && size_image <= bytes_read_image))
 	{
 		std::vector<char> data_image(recv_data_image+8, recv_data_image + size_image);
-		image = cv::imdecode(data_image, -1);
+		image_depth_right = cv::imdecode(data_image, -1);
 		first_image = false;
-		ROS_INFO("Image: %dx%d - %d", image.cols, image.rows, size_image);
+		ROS_INFO("Received image: %dx%d - %d", image_depth_right.cols, image_depth_right.rows, size_image);
 	}
 	
 	//cv::imwrite("/tmp/image.jpg", image);
-	ROS_INFO("Image resolution: %dx%d", image.cols, image.rows);
+	//ROS_INFO("Image resolution: %dx%d", image.cols, image.rows);
 	
-	if (width != image.cols || height != image.rows)
+	if (width != image_depth_right.cols || height != image_depth_right.rows)
 	{
-		width = image.cols;
-		height = image.rows;
-		ROS_INFO("New image resolution: %dx%d", width, height);
+		ROS_WARN("Old image resolution: %dx%d", width, height);
+		width = image_depth_right.cols;
+		height = image_depth_right.rows;
+		ROS_WARN("New image resolution: %dx%d", width, height);
 	}
 }
 
-void SimulatorImageReceiverTcpCls::ReceiveOdom() 
+void SimulatorStereoReceiverTcpCls::ReceiveOdom() 
 {
 	OdomMessage temp_odom_message;
 	// Set contents to zero
@@ -352,7 +359,7 @@ void SimulatorImageReceiverTcpCls::ReceiveOdom()
 	odom_message = temp_odom_message;
 }
 
-void SimulatorImageReceiverTcpCls::Loop()
+void SimulatorStereoReceiverTcpCls::Loop()
 {	
 	ros::Rate loop_rate(50);
 	int socket_command_sender;
@@ -375,34 +382,8 @@ void SimulatorImageReceiverTcpCls::Loop()
 		now = ros::Time::now();
 		ReceiveImage();
 		ReceiveOdom();
-
-		std_msgs::Header header;
-		header.seq = frame_counter;
-		header.frame_id = "camera";
-		header.stamp = now;
-
-		sensor_msgs::Image image_message;
-		cv_bridge::CvImage cvimage(header, enc::BGR8, image);
-		cvimage.toImageMsg(image_message);
-
-		sensor_msgs::CameraInfo camera_info = camera_info_manager_image_.getCameraInfo();
-		camera_info.header.frame_id = "camera";
-		camera_info.header.stamp = now;
-
-		image_raw_pub_.publish(image_message);
-		image_info_pub_.publish(camera_info);
-
-		sensor_msgs::Image image_message_depth;
-
-		cv::Mat image_depth;
-		cvtColor(image, image_depth, cv::COLOR_RGB2GRAY);
-		image_depth.convertTo(image_depth, CV_16U, 1, 0);
-
-		cv_bridge::CvImage cvimage_depth(header, enc::TYPE_16UC1, 100*image_depth);
-		cvimage_depth.toImageMsg(image_message_depth);
-
-		depth_pub_.publish(image_message_depth);
-		depth_info_pub_.publish(camera_info);
+		SendImage();		
+		SendDepth();		
 		
 		// Release images using deallocate (not release) otherwise memory leakge happens after imread
 		// Only use it when needed. Trying to do it when not needed casuses memory leakage too.
@@ -444,10 +425,68 @@ void SimulatorImageReceiverTcpCls::Loop()
 	close (socket_command_sender);
 }
 
+void SimulatorStereoReceiverTcpCls::SendImage() 
+{
+	// Take right half for color image.
+	cv::Rect roi;
+    roi.x = width / 2;
+    roi.y = 0;
+    roi.width = width / 2;
+    roi.height = height;
+
+    cv::Mat image_crop = image_depth_right(roi);
+	std_msgs::Header header;
+	header.seq = frame_counter;
+	header.frame_id = "camera";
+	header.stamp = now;
+
+	sensor_msgs::Image image_message;
+	cv_bridge::CvImage cvimage(header, enc::BGR8, image_crop);
+	cvimage.toImageMsg(image_message);
+
+	camera_info = camera_info_manager_image_.getCameraInfo();
+	camera_info.header.frame_id = "camera";
+	camera_info.header.stamp = now;
+
+	image_raw_pub_.publish(image_message);
+	image_info_pub_.publish(camera_info);
+} 
+
+void SimulatorStereoReceiverTcpCls::SendDepth() 
+{
+	// Take left half for color image.
+	cv::Rect roi;
+    roi.x = 0;
+    roi.y = 0;
+    roi.width = width / 2;
+    roi.height = height;
+    sensor_msgs::Image image_message_depth;
+
+	std_msgs::Header header;
+	header.seq = frame_counter;
+	header.frame_id = "camera";
+	header.stamp = now;
+
+	cv::Mat depth_crop = image_depth_right(roi);
+	cv::Mat image_depth;
+	cvtColor(depth_crop, image_depth, cv::COLOR_RGB2GRAY);
+	image_depth.convertTo(image_depth, CV_16U, 1, 0);
+
+	cv_bridge::CvImage cvimage_depth(header, enc::TYPE_16UC1, DEPTH_CONSTANT * image_depth);
+	cvimage_depth.toImageMsg(image_message_depth);
+
+	camera_info = camera_info_manager_image_.getCameraInfo();
+	camera_info.header.frame_id = "camera";
+	camera_info.header.stamp = now;
+
+	depth_pub_.publish(image_message_depth);
+	depth_info_pub_.publish(camera_info);
+}
+
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "SimulatorImageReceiverTcp");
-	SimulatorImageReceiverTcpCls simulator_stereo_receiver_tcp;
+	ros::init(argc, argv, "SimulatorStereoReceiverTcpCls");
+	SimulatorStereoReceiverTcpCls simulator_stereo_receiver_tcp;
 	ros::spinOnce();
 	simulator_stereo_receiver_tcp.ListenOnOdomUdpSocket();
 	simulator_stereo_receiver_tcp.ListenOnCameraTcpSocket();
