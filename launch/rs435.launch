@@ -1,13 +1,17 @@
 <launch>  
 
+<include file="$(find realsense_ros_camera)/launch/rs_rgbd.launch" />
+
 <arg name="manager" default="manager" /> <!-- Must be globally qualified -->
 <arg name="viewer" default="true" /> <!-- Must be globally qualified -->
 
 <node name="laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" output="screen">
-	<remap from="image" to="/camera/depth" />
-	<param name="output_frame_id" value="/camera"/>
-	<param name="scan_height" value="100"/>
+	<remap from="image" to="/camera/depth/image_rect_raw" />
+	<param name="output_frame_id" value="camera_depth_frame"/>
+	<param name="scan_height" value="1"/>
+	<param name="range_max" value="10.0"/>
+	<param name="range_min" value="0.45"/>
+	<param name="scan_time" value="0.033"/>
 </node>
-
 
 </launch>
