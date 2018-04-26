@@ -8,7 +8,6 @@
 #include <termios.h> // POSIX terminal control definitions
 #include <time.h>   // time calls
 #include <ros/console.h>
-#include <festival.h>
 #include "speak_lib.h"
 
 using namespace std;
@@ -34,10 +33,11 @@ SpeechEngineCls::SpeechEngineCls()
 	int options = 0;
 	void* user_data;
 	char *path=NULL;
-	//int result = espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, BUFFER_MS, path, options);
+	int result = espeak_Initialize(AUDIO_OUTPUT_SYNCH_PLAYBACK, BUFFER_MS, path, options);
+	printf("Speech initialization result: %d\n", result);
 	unsigned int uid = 0;
 	//espeak_Synth("Ready", 5, 0, POS_SENTENCE, 0, espeakCHARS_8BIT, &uid, NULL);
-	//espeak_Synth("Ready", 10, 0, POS_SENTENCE, 0, flags, &uid, user_data);
+	espeak_Synth("Ready", 10, 0, POS_SENTENCE, 0, flags, &uid, user_data);
 
 	printf("Speech UID: %d\n", (int)uid);
 	//nh_.param("axis_linear", linear_, linear_);
@@ -45,19 +45,12 @@ SpeechEngineCls::SpeechEngineCls()
 	//nh_.param("scale_angular", a_scale_, a_scale_);
 	//nh_.param("scale_linear", l_scale_, l_scale_);
 	speech_sub_ = nh_.subscribe < speech_engine::speech_request> ("speech_engine/speech_request", 10, &SpeechEngineCls::speechRequestCallback, this);
-
-	ros::Duration(3).sleep();
-
-    festival_initialize(1,210000);
-    festival_say_text("I am alive!");
 }
 
 void SpeechEngineCls::speechRequestCallback(const speech_engine::speech_request::ConstPtr& speech_request)
 {
 	unsigned int uid = 0;
-	//espeak_Synth(speech_request->speech_request.c_str(), speech_request->speech_request.size(), 0, POS_SENTENCE, 0, flags, &uid, NULL);
-    festival_say_text(speech_request->speech_request.c_str());
-
+	espeak_Synth(speech_request->speech_request.c_str(), speech_request->speech_request.size(), 0, POS_SENTENCE, 0, flags, &uid, NULL);
 	ROS_INFO("Speaking: \"%s\"", speech_request->speech_request.c_str());
 }
 

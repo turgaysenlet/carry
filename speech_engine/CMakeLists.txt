@@ -114,6 +114,8 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  /usr/include/festival
+  /usr/include/speech_tools
 )
 
 ## Declare a C++ library
@@ -136,7 +138,7 @@ add_dependencies(speech_engine_node ${${PROJECT_NAME}_gencpp} ${${PROJECT_NAME}_
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(speech_engine_node
-  ${catkin_LIBRARIES} espeak pthread portaudio sonic
+  ${catkin_LIBRARIES} espeak pthread portaudio sonic Festival estools estbase eststring
 )
 
 #############

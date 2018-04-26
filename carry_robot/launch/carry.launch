@@ -1,5 +1,4 @@
 <launch>  
-  <node name="simulator_image_receiver_node" pkg="simulator_image_receiver" type="simulator_image_receiver_node" />
-
+  <node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node" />
   
 </launch>
