@@ -138,7 +138,7 @@ add_dependencies(speech_engine_node ${${PROJECT_NAME}_gencpp} ${${PROJECT_NAME}_
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(speech_engine_node
-  ${catkin_LIBRARIES} espeak pthread portaudio sonic Festival estools estbase eststring
+  ${catkin_LIBRARIES} Festival estools estbase eststring
 )
 
 #############
