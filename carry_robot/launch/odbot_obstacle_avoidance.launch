@@ -40,7 +40,7 @@
 <node name="laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" output="screen">
 	<remap from="image" to="/stereo/depth" />
 	<param name="output_frame_id" value="/camera"/>
-	<param name="scan_height" value="100"/>
+	<param name="scan_height" value="1"/>
 </node>
 
 </launch>

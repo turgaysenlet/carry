@@ -1,0 +1,3 @@
+echo Calibrate Mono
+echo camera_calibration cameracalibrator.py --size 8x6 --square 0.1 image:=/stereo/image/image_raw camera:=/stereo/image
+rosrun camera_calibration cameracalibrator.py --size 8x6 --square 0.1 image:=/stereo/image/image_raw camera:=/stereo/image

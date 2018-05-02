@@ -45,7 +45,7 @@ const int COMMAND_SEND_PORT = 3000;
 const int MAX_BYTES = 262143;
 // Convert depth image coming from simulator into actual depth in meters.
 // Assumes 0.01 depth scale on simulator side.
-const float DEPTH_CONSTANT = 40.0f;
+const float DEPTH_CONSTANT = 35.0f;
 
 struct OdomMessage {
 	int OdomSequence;
