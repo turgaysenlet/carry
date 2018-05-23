@@ -1,0 +1,12 @@
+<launch>  
+<node name="laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" output="screen">
+	<remap from="image" to="/stereo/depth/image_raw"/>
+	<remap from="camera_info" to="/stereo/depth/camera_info"/>
+	<remap from="frame_id" to="camera"/>
+	<param name="output_frame_id" value="camera_depth_frame"/>
+	<param name="scan_height" value="3"/>
+	<param name="range_max" value="7"/>
+	<param name="range_min" value="0.45"/>
+</node>
+
+</launch>
