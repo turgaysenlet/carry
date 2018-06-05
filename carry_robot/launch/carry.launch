@@ -1,4 +1,4 @@
 <launch>  
-  <node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node" />
-  
+  <node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node" output="screen"/>
+  <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
 </launch>
