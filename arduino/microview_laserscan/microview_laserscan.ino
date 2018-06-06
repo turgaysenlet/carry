@@ -20,6 +20,8 @@ void scan_cb( const std_msgs::String& cmd_msg) {
   // a++;
   // a %= 100;
   uView.clear(PAGE);
+  uView.setCursor(0,8);
+  uView.print("laser");
   //widget1->setValue(a++);
   //uView.setCursor(0,50);
   //uView.print(cmd_msg.data);
@@ -46,6 +48,12 @@ void setup() {
   // put your setup code here, to run once:
   uView.begin();
   uView.clear(PAGE);      // clear page
+  uView.setCursor(0,8);
+  uView.print("laser");
+  uView.line(SCREEN_WIDTH/2,SCREEN_HEIGHT,SCREEN_WIDTH/2-3,SCREEN_HEIGHT-3);
+  uView.line(SCREEN_WIDTH/2,SCREEN_HEIGHT,SCREEN_WIDTH/2+3,SCREEN_HEIGHT-3);
+  uView.line(0,SCREEN_HEIGHT-3,SCREEN_WIDTH,SCREEN_HEIGHT-3);  
+  uView.display();
   //widget1 = new MicroViewSlider(0,0,0,100);   // declare widget0 as a Slider at x=0, y=0, min=0, max=100
   nh.subscribe(sub);
 }
