@@ -1,4 +1,8 @@
 <launch>  
   <node name="speech_engine_node" pkg="speech_engine" type="speech_engine_node" output="screen"/>
   <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
+  <node name="process_laser_for_microview" pkg="carry_robot" type="process_laser_for_microview.py" output="screen"/>
+  <node name="arduino_serial_node" pkg="rosserial_python" type="serial_node.py" output="screen" args="/dev/ttyUSB0" />
+  <include file="$(find carry_robot)/launch/depth_laser.launch"/>
+  <include file="$(find openni2_launch)/launch/openni2.launch"/>
 </launch>
