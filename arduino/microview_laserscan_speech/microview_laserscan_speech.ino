@@ -23,7 +23,7 @@ void speech_cb( const std_msgs::String& cmd_msg) {
   uView.print("speech\n");
   uView.print(cmd_msg.data);
   uView.display();
-  delay(1500);
+  delay(3000);
   speaking = false;
 }
 
