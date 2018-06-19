@@ -2,6 +2,7 @@
 #include <servo_controller/servo_control.h>
 #include <servo_controller/servo_status.h>
 #include <servo_controller/servo_array_status.h>
+#include <std_msgs/Int32.h>
 #include <stdio.h> // standard input / output functions
 #include <string.h> // string function definitions
 #include <unistd.h> // UNIX standard function definitions
@@ -14,11 +15,35 @@
 using namespace std;
 using namespace ros::console::levels;
 
+
+// Gets the position of a Maestro channel.
+// See the "Serial Servo Commands" section of the user's guide.
+int maestroGetPosition(int fd, unsigned char channel)
+{
+	unsigned char command[] = {0x90, channel};
+	int n = write(fd, command, sizeof(command));
+	if (n < 0) {
+		perror("error reading");
+		return -1;
+	}
+
+	unsigned char response[2];
+	n = read(fd, response,2);
+	if (n != 2) {
+		perror("error reading");
+		return -1;
+	}
+	return response[0] + 256*response[1];
+}
+
 class ServoControllerCls
 {
 public:
 	ServoControllerCls();
+	~ServoControllerCls();
 	void SetServoPosition(int channel_no, int target_position);
+	int GetServoPosition(int channel_no);
+	void ReadServos();
 	void InitializeSerialPort();
 	void InitializePubSub();
 	void InitializeServoProperties();
@@ -29,6 +54,8 @@ private:
 	ros::NodeHandle nh_;
 
 	ros::Publisher servo_array_status_pub_;
+	ros::Publisher left_encoder_pub_;
+	ros::Publisher right_encoder_pub_;
 	ros::Subscriber servo_0_control_sub_;
 	ros::Subscriber servo_1_control_sub_;
 	ros::Subscriber servo_2_control_sub_;
@@ -37,11 +64,39 @@ private:
 	ros::Subscriber servo_5_control_sub_;
 
 	int serial_port;
+	int left_encoder_count;
+	int right_encoder_count;
+	int left_encoder_prev;
+	int right_encoder_prev;
 };
+
+ServoControllerCls::~ServoControllerCls() {
+	close(serial_port);
+}
 
 void ServoControllerCls::InitializeSerialPort() {
 	// Make sure to set the servo controller to Dual USB mode
-	serial_port = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
+	// Open the Maestro's virtual COM port.
+	//const char * device = "\\\\.\\USBSER000"; // Windows, "\\\\.\\COM6" also works
+	const char * device = "/dev/ttyACM0"; // Linux
+	//const char * device = "/dev/cu.usbmodem00034567"; // Mac OS X
+	serial_port = open(device, O_RDWR | O_NOCTTY | O_NDELAY);
+	if (serial_port == -1)
+	{
+		perror(device);
+		return;
+	}
+	#ifdef _WIN32
+		_setmode(serial_port, _O_BINARY);
+	#else
+		struct termios options;
+		tcgetattr(serial_port, &options);
+		options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+		options.c_oflag &= ~(ONLCR | OCRNL);
+		options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+		tcsetattr(serial_port, TCSANOW, &options);
+	#endif
+
 	if (serial_port < 0)
 	{
 		ROS_WARN("Cannot open servo controller serial port on /dev/ttyACM0. Make sure you have correct permissions. Port no: %d", serial_port);
@@ -67,6 +122,10 @@ void ServoControllerCls::InitializePubSub() {
     // connect
 	servo_array_status_pub_ = nh_.advertise < servo_controller::servo_array_status
 			> ("servo_controller/servo_array_status", 1, true);
+
+	left_encoder_pub_ = nh_.advertise < std_msgs::Int32> ("servo_controller/left_encoder_count", 1, true);
+	right_encoder_pub_ = nh_.advertise < std_msgs::Int32> ("servo_controller/right_encoder_count", 1, true);
+
 
 	// Separate messages for independent control of each servo
 	servo_0_control_sub_ =
@@ -113,14 +172,14 @@ void ServoControllerCls::InitializeServoProperties() {
 	servo_array_status.servo[4].servo_no = 4;
 	servo_array_status.servo[5].servo_no = 5;
 
-	servo_array_status.servo[0].name = "";
-	servo_array_status.servo[1].name = "--Right Wheel Encoder";
+	servo_array_status.servo[0].name = "Left Wheel Encoder";
+	servo_array_status.servo[1].name = "Right Wheel Encoder";
 	servo_array_status.servo[2].name = "Head Servo";
 	servo_array_status.servo[3].name = "Right Steering Servo";
 	servo_array_status.servo[4].name = "Left Steering Servo";
 	servo_array_status.servo[5].name = "Main Motor";
 
-	servo_array_status.servo[0].mode = 0; // Not defined
+	servo_array_status.servo[0].mode = 2; // Digital input - wheel encoder
 	servo_array_status.servo[1].mode = 2; // Digital input - wheel encoder
 	servo_array_status.servo[2].mode = 1; // Servo control signal output - servo
 	servo_array_status.servo[3].mode = 1; // Servo control signal output - servo
@@ -162,8 +221,8 @@ void ServoControllerCls::InitializeServoProperties() {
 	servo_array_status.servo[4].acceleration_limit = acceleration_limit;
 	servo_array_status.servo[5].acceleration_limit = acceleration_limit;
 
-	servo_array_status.servo[0].enabled = false;
-	servo_array_status.servo[1].enabled = false;
+	servo_array_status.servo[0].enabled = true;
+	servo_array_status.servo[1].enabled = true;
 	servo_array_status.servo[2].enabled = true;
 	servo_array_status.servo[3].enabled = true;
 	servo_array_status.servo[4].enabled = true;
@@ -172,6 +231,10 @@ void ServoControllerCls::InitializeServoProperties() {
 
 ServoControllerCls::ServoControllerCls()
 {
+	left_encoder_count = 0;
+	right_encoder_count = 0;
+	left_encoder_prev = 0;
+	right_encoder_prev = 0;
 	InitializeSerialPort();
 	InitializeServoProperties();
 	InitializePubSub();
@@ -189,6 +252,23 @@ void ServoControllerCls::SetServoPosition(int channel_no, int target_position) {
 	{
 		ROS_LOG(Info, ROSCONSOLE_DEFAULT_NAME, "Servo %d: %d", channel_no, target_position);
 	}
+}
+
+int ServoControllerCls::GetServoPosition(int channel_no) {
+	int pos = maestroGetPosition(serial_port, (unsigned char) channel_no);
+	if (channel_no == 0) {
+		if (left_encoder_prev != pos) {
+			left_encoder_prev = pos;
+			left_encoder_count++;
+		}
+	}
+	if (channel_no == 1) {
+		if (right_encoder_prev != pos) {
+			right_encoder_prev = pos;
+			right_encoder_count++;
+		}
+	}
+	return pos;
 }
 
 void ServoControllerCls::servoControlCallback(const servo_controller::servo_control::ConstPtr& control_command)
@@ -227,13 +307,120 @@ void ServoControllerCls::servoControlCallback(const servo_controller::servo_cont
 	SetServoPosition(servo_no, target);
 
 	// Publish update
-	servo_array_status.servo[servo_no].target = target;
+	if (servo_array_status.servo[servo_no].mode == 1) {
+	   servo_array_status.servo[servo_no].target = target;
+    } else {
+		ROS_ERROR("Servo: %d is read only.", servo_no);
+	}
 	servo_array_status_pub_.publish(servo_array_status);
+}
+
+void ServoControllerCls::ReadServos() {
+	for (int servo_no = 0; servo_no < 6; servo_no++) {
+		if (servo_array_status.servo[servo_no].mode == 2) {
+			ROS_INFO("Reading servo %d", servo_no);
+			servo_array_status.servo[servo_no].actual = GetServoPosition(servo_no);
+			ROS_INFO("Servo %d position %d", servo_no, servo_array_status.servo[servo_no].actual);
+		}
+	}
+	servo_array_status_pub_.publish(servo_array_status);	
+	std_msgs::Int32 left;
+	left.data = left_encoder_count;
+	left_encoder_pub_.publish(left);
+	std_msgs::Int32 right;
+	right.data = right_encoder_count;
+	right_encoder_pub_.publish(right);
 }
 
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "ServoController");
 	ServoControllerCls servo_controller;
-	ros::spin();
+	ros::Rate loop_rate(5);
+	while (ros::ok())
+	{	
+		// Check messages
+		ros::spinOnce();
+		
+		servo_controller.ReadServos();
+		// This will adjust as needed per iteration
+		loop_rate.sleep();
+	}
 }
+
+/*
+
+// Uses POSIX functions to send and receive data from a Maestro.
+// NOTE: The Maestro's serial mode must be set to "USB Dual Port".
+// NOTE: You must change the 'const char * device' line below.
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#ifdef _WIN32
+#define O_NOCTTY 0
+#else
+#include <termios.h>
+#endif
+// Gets the position of a Maestro channel.
+// See the "Serial Servo Commands" section of the user's guide.
+int maestroGetPosition1(int fd, unsigned char channel)
+{
+	unsigned char command[] = {0x90, channel};
+	if(write(fd, command, sizeof(command)) == -1)
+	{
+		perror("error writing");
+		return -1;
+	}
+	unsigned char response[2];
+	if(read(fd,response,2) != 2)
+	{
+		perror("error reading");
+		return -1;
+	}
+	return response[0] + 256*response[1];
+}
+
+// Sets the target of a Maestro channel.
+// See the "Serial Servo Commands" section of the user's guide.
+// The units of 'target' are quarter-microseconds.
+int maestroSetTarget(int fd, unsigned char channel, unsigned short target)
+{
+	unsigned char command[] = {0x84, channel, target & 0x7F, target >> 7 & 0x7F};
+	if (write(fd, command, sizeof(command)) == -1)
+	{
+		perror("error writing");
+		return -1;
+	}
+	return 0;
+}
+int main()
+{
+	// Open the Maestro's virtual COM port.
+	//const char * device = "\\\\.\\USBSER000"; // Windows, "\\\\.\\COM6" also works
+	const char * device = "/dev/ttyACM0"; // Linux
+	//const char * device = "/dev/cu.usbmodem00034567"; // Mac OS X
+	int fd = open(device, O_RDWR | O_NOCTTY| O_NDELAY);
+	if (fd == -1)
+	{
+		perror(device);
+		return 1;
+	}
+	#ifdef _WIN32
+		_setmode(fd, _O_BINARY);
+	#else
+		struct termios options;
+		tcgetattr(fd, &options);
+		options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+		options.c_oflag &= ~(ONLCR | OCRNL);
+		options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+		tcsetattr(fd, TCSANOW, &options);
+	#endif
+
+	int position = maestroGetPosition(fd, 0);
+	printf("Current position is %d.\n", position);
+	int target = (position < 6000) ? 7000 : 5000;
+	printf("Setting target to %d (%d us).\n", target, target/4);
+	maestroSetTarget(fd, 2, target);
+	close(fd);
+	return 0;
+}*/
