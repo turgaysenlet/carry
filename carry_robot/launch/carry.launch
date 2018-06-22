@@ -3,6 +3,41 @@
   <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
   <node name="process_laser_for_microview" pkg="carry_robot" type="process_laser_for_microview.py" output="screen"/>
   <node name="arduino_serial_node" pkg="rosserial_python" type="serial_node.py" output="screen" args="/dev/ttyUSB0" />
+
+<arg name="manager" default="manager" /> <!-- Must be globally qualified -->
+<arg name="viewer" default="true" /> <!-- Must be globally qualified -->
+  
+<node pkg="tf" type="static_transform_publisher"
+   name="camera_link_to_camera"
+   args="0 0 -0.04 1.57079632695 3.1415926539 1.57079632695 /camera_link /camera 50" output="screen">
+</node>
+
+<node pkg="tf" type="static_transform_publisher"
+   name="camera_depth_frame"
+   args="0 0 -0.04 1.57079632695 3.1415926539 1.57079632695 /camera_depth_frame /camera 50" output="screen">
+</node>
+
+
+<node name="robot_state_node" pkg="robot_state" type="robot_state_node" output="screen">
+</node>
+
+
+<node name="motor_controller_node" pkg="motor_controller" type="motor_controller_node" output="screen">
+</node>
+
+<node name="remote_controller_node" pkg="remote_controller" type="remote_controller_node" output="screen">
+</node>
+
+<node name="servo_controller_node" pkg="servo_controller" type="servo_controller_node" output="screen">
+</node>
+
+<node name="autonomous_controller_node" pkg="autonomous_controller" type="autonomous_controller_node" output="screen">
+</node>
+
+<node name="obstable_detector_node" pkg="obstable_detector" type="obstable_detector_node" output="screen">
+</node>
+
+
   <include file="$(find carry_robot)/launch/depth_laser.launch"/>
   <include file="$(find openni2_launch)/launch/openni2.launch"/>
 </launch>
