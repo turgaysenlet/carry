@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <geometry_msgs/Vector3.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -48,7 +49,7 @@ const float MaximumForwardSpeed = 4.1f;
 /// </summary>
 const float MaximumReverseSpeed = -4.1f;
 const float rate = 5;
-const float stop_counter_seconds = 3.0f;
+const float stop_counter_seconds = 15.0f;
 int counter = 0;
 
 class AutonomousControllerCls
@@ -64,6 +65,7 @@ private:
 	void joyDiagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& diag);
 	void ChangeState(int new_state);
 	void topViewImageCallback(const sensor_msgs::Image::ConstPtr& image_msg);
+    void neurobotCallback(const geometry_msgs::Vector3::ConstPtr& vector_msg);
 	ros::NodeHandle nh_;
 
 	ros::Publisher ignition_control_pub_;
@@ -77,6 +79,7 @@ private:
 	bool force_next_ignition_;
 	ros::Subscriber image_sub_;
 	int robot_state;
+    ros::Subscriber neurobot_sub_;
 	bool joy_ok;
 };
 
@@ -96,7 +99,21 @@ AutonomousControllerCls::AutonomousControllerCls()
 			> ("motor_controller/speed_steering_control", 1);
 	robot_state_sub_ = nh_.subscribe < robot_state::robot_state > ("robot_state/robot_state", 10, &AutonomousControllerCls::robotStateCallback, this);
 	robot_state_change_request_pub_ = nh_.advertise < robot_state::robot_state> ("robot_state/robot_state_change_request", 1, false);
-	image_sub_ = nh_.subscribe("/stereo/top_view", 1, &AutonomousControllerCls::topViewImageCallback, this);		
+	image_sub_ = nh_.subscribe("/stereo/top_view", 1, &AutonomousControllerCls::topViewImageCallback, this);
+	neurobot_sub_ = nh_.subscribe <geometry_msgs::Vector3> ("neurobot", 3, &AutonomousControllerCls::neurobotCallback, this);
+}
+
+
+float steering = 0.5f;
+float head = 0.5f;						
+float speed = 0.3f;
+
+void AutonomousControllerCls::neurobotCallback(
+	const geometry_msgs::Vector3::ConstPtr& vector_msg)
+{
+  steering = vector_msg->x;
+  head = vector_msg->y;
+  speed = vector_msg->z;
 }
 
 void AutonomousControllerCls::topViewImageCallback(
@@ -208,12 +225,12 @@ void AutonomousControllerCls::Run()
 				stop_message.state = robot_state::robot_state_constants::RobotState_Stop;
 				robot_state_change_request_pub_.publish(stop_message);
 			}
-			float steering = 0;
+//			float steering = 0.5f;
 			float steering_degree = steering * MaximumSteeringAngle;
-			float head = 0;						
+//			float head = 0.5f;						
 			float head_degree = head * MaximumHeadAngle;
 
-			float speed = 0.3f;
+//			float speed = 0.3f;
 			float speed_mps = speed * MaximumForwardSpeed;
 
 			motor_controller::speed_steering speed_steering_message;

@@ -320,9 +320,9 @@ void ServoControllerCls::servoControlCallback(const servo_controller::servo_cont
 void ServoControllerCls::ReadServos() {
 	for (int servo_no = 0; servo_no < 6; servo_no++) {
 		if (servo_array_status.servo[servo_no].mode == 2) {
-			ROS_INFO("Reading servo %d", servo_no);
+			// ROS_INFO("Reading servo %d", servo_no);
 			servo_array_status.servo[servo_no].actual = GetServoPosition(servo_no);
-			ROS_INFO("Servo %d position %d", servo_no, servo_array_status.servo[servo_no].actual);
+			// ROS_INFO("Servo %d position %d", servo_no, servo_array_status.servo[servo_no].actual);
 		}
 	}
 	servo_array_status_pub_.publish(servo_array_status);	

@@ -33,7 +33,7 @@ string StateName(int state)
 	else if (state == robot_state::robot_state_constants::RobotState_Remote)
 		state_name = "Remote";
 	else if (state == robot_state::robot_state_constants::RobotState_Autonomous)
-		state_name = "Autonomous";
+		state_name = "Naural Control";
 	else if (state == robot_state::robot_state_constants::RobotState_FollowSidewalk)
 		state_name = "Follow Sidewalk";
 	else

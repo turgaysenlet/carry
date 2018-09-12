@@ -37,6 +37,7 @@ def listener():
     rospy.spin()
 
 if __name__ == '__main__':
+    print "Starting node"
     pub = rospy.Publisher('scan_string', String, queue_size=10)
     try:
         listener()
