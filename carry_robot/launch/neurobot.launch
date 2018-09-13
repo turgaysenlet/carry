@@ -22,4 +22,6 @@
 <node name="autonomous_controller_node" pkg="autonomous_controller" type="autonomous_controller_node" output="screen"></node>
 <node name="neurobot_receiver_node" pkg="neurobot_receiver" type="neurobot_receiver_node" output="screen"></node>
 
+<include file="$(find carry_robot)/launch/rs435_2.launch"/>
+
 </launch>
