@@ -125,6 +125,7 @@ void NeurobotReceiverCls::Stop()
 
 void NeurobotReceiverCls::ReceiveData()
 {
+	ros::Rate loop_rate(30);
 	int sock_left;	
 	int sock_command_sender;
 	unsigned int addr_len;
@@ -168,7 +169,6 @@ void NeurobotReceiverCls::ReceiveData()
 	ROS_INFO("UDP Server waiting for client on port %d", htons(server_addr_left.sin_port));
 
 
-	ros::Rate loop_rate(30);
 	// message declarations
 	geometry_msgs::TransformStamped odom_trans;	
 	odom_trans.header.frame_id = "odom";
@@ -178,24 +178,33 @@ void NeurobotReceiverCls::ReceiveData()
 	cv::Mat image_left;
 	while (ros::ok())
 	{
-		bytes_read_left = recvfrom(sock_left, recv_data_left, 2, 0, (sockaddr *)&client_addr, &addr_len);
+		recv_data_left[0] = 0;
+		for (int i = 0; i < 2; i++) 
+		{		
+			bytes_read_left = recvfrom(sock_left, recv_data_left, 2, 0, (sockaddr *)&client_addr, &addr_len);
+		}
 
 		int frame_counter_left = (int)recv_data_left[0];
 
-		ROS_INFO("Left count: %d", frame_counter_left);
-		ROS_INFO("Left bytes: %d", bytes_read_left);
-		ROS_INFO("Left byte[0]: %d", (int)recv_data_left[0]);
-		if (bytes_read_left <= 0) 
+		//ROS_INFO("Left count: %d", frame_counter_left);
+		//ROS_INFO("Left bytes: %d", bytes_read_left);
+		if (bytes_read_left > 0) 
 		{
-			continue;
+			//ROS_INFO("Left byte[0]: %d", (int)recv_data_left[0]);
+			geometry_msgs::Vector3 vector_message;
+			float x = -5.0f*(((float)((int)recv_data_left[0]) / 255.0f)-0.5f);
+			X = X * 0.95f + x * 0.05f;
+	        vector_message.x = X;
+	        vector_message.y = vector_message.x;
+	        vector_message.z = 0;
+			neurobot_pub_.publish(vector_message);
 		}
-		geometry_msgs::Vector3 vector_message;
-		float x = -5.0f*(((float)((int)recv_data_left[0]) / 255.0f)-0.5f);
-		X = X * 0.95f + x * 0.05f;
-        vector_message.x = X;
-        vector_message.y = vector_message.x;
-        vector_message.z = 0;
-		neurobot_pub_.publish(vector_message);
+		
+		// Check messages
+		ros::spinOnce();
+
+		// This will adjust as needed per iteration
+		loop_rate.sleep();
 		continue;
 
 		float send_data[2] = {desired_speed, desired_steering};
@@ -209,11 +218,7 @@ void NeurobotReceiverCls::ReceiveData()
 		odom_trans.transform.translation.z = 0;
 		odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(0);
 
-		// Check messages
-		ros::spinOnce();
-
-		// This will adjust as needed per iteration
-		loop_rate.sleep();
+		
 	}
 	close (sock_left);
 

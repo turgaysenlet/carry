@@ -20,6 +20,6 @@
 <node name="remote_controller_node" pkg="remote_controller" type="remote_controller_node" output="screen"></node>
 <node name="servo_controller_node" pkg="servo_controller" type="servo_controller_node" output="screen"></node>
 <node name="autonomous_controller_node" pkg="autonomous_controller" type="autonomous_controller_node" output="screen"></node>
-
+<node name="neurobot_receiver_node" pkg="neurobot_receiver" type="neurobot_receiver_node" output="screen"></node>
 
 </launch>

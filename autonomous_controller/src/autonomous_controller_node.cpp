@@ -48,8 +48,8 @@ const float MaximumForwardSpeed = 4.1f;
 /// Maximum reverse travel speed in meters per second.
 /// </summary>
 const float MaximumReverseSpeed = -4.1f;
-const float rate = 5;
-const float stop_counter_seconds = 15.0f;
+const float rate = 30;
+const float stop_counter_seconds = 35.0f;
 int counter = 0;
 
 class AutonomousControllerCls
@@ -218,13 +218,13 @@ void AutonomousControllerCls::Run()
 		//ROS_INFO("State: %d", robot_state);
 		if (robot_state == robot_state::robot_state_constants::RobotState_Autonomous)
 		{
-			counter++;
+			/*counter++;
 			if (counter > stop_counter_seconds * rate)
 			{
 				robot_state::robot_state stop_message;
 				stop_message.state = robot_state::robot_state_constants::RobotState_Stop;
 				robot_state_change_request_pub_.publish(stop_message);
-			}
+			}*/
 //			float steering = 0.5f;
 			float steering_degree = steering * MaximumSteeringAngle;
 //			float head = 0.5f;						
