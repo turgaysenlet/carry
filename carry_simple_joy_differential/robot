@@ -1,0 +1,4 @@
+roscore &
+rosrun joy joy_node &
+/home/raspberry/catkin_ws/src/carry_joy/carry_joy.py &
+rosrun rosserial_python serial_node.py /dev/ttyACM0 &
